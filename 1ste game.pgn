@@ -1,0 +1,53 @@
+[Event "Computer chess game"]
+[Site "LAPTOP-92BTUJOU"]
+[Date "2022.07.11"]
+[Round "?"]
+[White "Henri"]
+[Black "Chess engine"]
+[Result "0-1"]
+[BlackElo "2000"]
+[ECO "C57"]
+[Opening "Two Knights"]
+[Time "17:17:21"]
+[Variation "Fegatello (Fried Liver) Attack"]
+[WhiteElo "2400"]
+[TimeControl "0+6"]
+[Termination "normal"]
+[PlyCount "74"]
+[WhiteType "human"]
+[BlackType "program"]
+
+1. e4 e5 {(e7-e5 Nb1-c3 Ng8-f6 Ng1-f3 Nb8-c6) 0.00/5 0} 2. Nf3 Nc6 {(Nb8-c6
+d2-d4 e5xd4 Nf3xd4 Ng8-f6) -0.10/5 0} 3. Bc4 Nf6 {(Ng8-f6 Nb1-c3 Bf8-c5 O-O
+O-O) 0.00/5 1} 4. Ng5 d5 {(d7-d5 e4xd5 Nf6xd5 Nb1-c3 Nc6-b4) +0.20/5 0} 5.
+exd5 Nxd5 {(Nf6xd5 Nb1-c3 Qd8xg5 Bc4xd5 Bc8-f5) +0.20/5 0} 6. Nxf7 Kxf7
+{(Ke8xf7 Qd1-f3+ Kf7-e6 Nb1-c3 Nc6-b4 O-O) +2.30/5 0} 7. Qf3+ Ke6 {(Kf7-e6
+Nb1-c3 Nc6-b4 O-O c7-c6 Qf3-g4+) +2.30/5 2} 8. Nc3 Nb4 {(Nc6-b4 Qf3-e4
+c7-c6 d2-d4 Bf8-d6) +2.35/5 1} 9. O-O c6 {(c7-c6 Qf3-g4+ Ke6-f7 Qg4-h5+
+Kf7-e6 Qh5-g4+ Ke6-f7 Qg4-h5+) +2.20/5 4} 10. Bb3 Bc5 {(Bf8-c5 Qf3-g4+
+Ke6-f7 Qg4-c4 Qd8-b6 d2-d3) +2.25/5 3} 11. a3 Na6 {(Nb4-a6 Rf1-e1 g7-g5
+Qf3-h3+ Ke6-d6 Nc3-e4+) +2.10/5 1} 12. Re1 Re8 {(Rh8-e8 Qf3-e4 Ke6-d6
+Nc3xd5 c6xd5) +1.15/5 8} 13. Qg4+ Kf6 {(Ke6-f6 Qg4-f3+ Kf6-e6 Qf3-e4 Ke6-d6
+Nc3xd5 c6xd5) +1.15/5 6} 14. Qh4+ Ke6 {(Kf6-e6 Qh4xh7 Qd8-f6 Nc3-e4 Qf6-h6
+Qh7xh6+) +1.20/5 8} 15. Qxh7 Qf6 {(Qd8-f6 Nc3-e4 Qf6-h6 Qh7xh6+ g7xh6
+d2-d3) +1.10/5 1} 16. Re2 Bd7 {(Bc8-d7 Qh7-e4 Na6-c7 d2-d4 Bc5-d6) +1.10/5
+2} 17. d3 Bb6 {(Bc5-b6 Nc3-e4 Qf6-f8 Qh7-g6+ Ke6-e7 Bc1-d2) +0.95/5 6} 18.
+Be3 Bxe3 {(Bb6xe3 f2xe3 Na6-c5 Nc3-e4 Nc5xe4) +1.15/5 1} 19. Rxe3 Rh8
+{(Re8-h8 Qh7-e4 Na6-c7 Ra1-e1 Rh8-h5) +0.75/5 6} 20. Qe4 Nc7 {(Na6-c7
+Ra1-e1 Ra8-d8 Qe4xe5+ Qf6xe5 Re3xe5+) -0.25/5 1} 21. d4 Rh5 {(Rh8-h5 g2-g4
+Rh5-h8 d4xe5 Qf6-h6) -0.45/5 4} 22. Rae1 Rf5 {(Rh5-f5 Qe4-g4 Ra8-d8 Re3xe5+
+Ke6-d6 Nc3-e4+) -0.40/5 2} 23. dxe5 Qf8 {(Qf6-f8 Qe4-g4 Qf8-f7 Re3-f3
+g7-g5) -0.35/5 4} 24. Qg4 g5 {(g7-g5 Re3-d3 Ra8-d8 Qg4-d4 Bd7-c8) -0.35/5
+4} 25. Rd3 Rd8 {(Ra8-d8 Qg4-d4 Bd7-c8 g2-g4 Rf5-f4) -0.45/5 3} 26. Ne4 Ke7
+{(Ke6-e7 Ne4-d6 Rf5xf2 Qg4xg5+ Ke7-e6 Nd6xb7) -0.70/5 1} 27. Nd6 b5 {(b7-b5
+Nd6xf5+ Qf8xf5 Qg4-d4 a7-a5 h2-h4) -2.25/5 1} 28. Nxf5+ Qxf5 {(Qf8xf5
+Qg4-d4 a7-a5 Qd4-c5+ Ke7-e8 Qc5-a7 a5-a4) -2.25/5 1} 29. Qxf5 Bxf5 {(Bd7xf5
+Rd3-d2 Ke7-e6 c2-c4 b5xc4) -2.05/5 0} 30. Rf3 Ke6 {(Ke7-e6 Rf3-g3 g5-g4
+Rg3-c3 Ke6-d7) -2.00/5 0} 31. Bxd5+ Nxd5 {(Nc7xd5 Rf3-g3 g5-g4 b2-b4 a7-a6
+Re1-e2) -1.20/5 0} 32. h3 Bxc2 {(Bf5xc2 Rf3-g3 Rd8-g8 h3-h4 g5-g4) -0.50/5
+0} 33. Re2 Bd1 {(Bc2-d1 Re2-e1 Bd1xf3 g2xf3 c6-c5) +1.30/5 0} 34. Rd2 Bxf3
+{(Bd1xf3 g2xf3 Ke6xe5 b2-b4 a7-a6) +2.45/5 0} 35. gxf3 Kxe5 {(Ke6xe5 b2-b4
+a7-a6 Rd2-d1 Rd8-e8) +2.45/5 0} 36. Kg2 Nf4+ {(Nd5-f4+ Kg2-g3 Rd8xd2 b2-b3
+Nf4-d3 Kg3-g4) +8.65/5 0} 37. Kg3 Rxd2 {(Rd8xd2 b2-b3 Nf4-d3 Kg3-g4
+Nd3xf2+) +8.65/5 0 White resigns} 0-1
+
