@@ -31,7 +31,7 @@ BOARD ENUM
 
 Vraag: Idee dat de enum een naam missen!?
 ***************/
-//Rij voor namen van vakjes op het spelbord (en mogelijkheden voor kleur/stukken die met lijnen gaan??).
+//Rij voor namen van vakjes op het spelbord. Hiermee kan je de computer vertellen print ... of vakje c4 en dan doet die dat. (en mogelijkheden voor kleur/stukken die met lijnen gaan).
 enum {
     a8, b8, c8, d8, e8, f8, g8, h8,
     a7, b7, c7, d7, e7, f7, g7, h7,
@@ -169,17 +169,20 @@ void print_bitboard(U64 bitboard)
         //Herhaald 8x voor het aantal verticale rijen voor nu (0, 1, 2, 3, 4, 5, 6, 7, 8) maar eigenlijk (a, b, c, d, e, f, g, h). Dan zijn alle vakjes geweest want je hebt 8x8 + een rij onder en links om de naam van het vakje aan te geven. 
         for (int file = 0; file < 8; file++)
         {
-            //Het nummer van het vakje van linksboven naar rechtsonder. Linksboven dus 1, daarna 2 en als laatste 64 rechtsonder.
+            //Benoemd het nummer van het vakje van linksboven naar rechtsonder. Linksboven dus 1, daarna 2 en als laatste 64 rechtsonder.
             int square = rank * 8 + file;
-            //Tenzij het de eerste verticale rij is (rij 0), dan print van 1 tot 8.
+            //Als het de eerste verticale rij is (rij 0), dan print van 1 tot 8 (dit is de rij links van het spelbord die aangeeft op welke rij je zit).
             if (file == 0)
             {
                 std::printf("  %d ", 8 - rank);
             }
+            //Print de bit status van een vakje, dit is of 1 of 0.
             std::printf(" %d", get_bit(bitboard, square) ? 1 : 0);
         }
+        //Witregel.
         std::printf("\n");
     }
+    //Print kolom letters onderaan.
     std::printf("\n     a b c d e f g h\n\n");
     std::printf("     Bitboard: %llu\n\n", bitboard);
 }
@@ -288,9 +291,13 @@ void parse_fen(const char* fen)
 ATTACKS
 
 ***************/
+//Bitboard voor niet de a kolom.
 const U64 not_a_file = 18374403900871474942ULL;
+//Bitboard voor niet de h kolom.
 const U64 not_h_file = 9187201950435737471ULL;
+//Bitboard voor niet de g of h kolom.
 const U64 not_gh_file = 4557430888798830399ULL;
+//Bitboard voor niet de a of b kolom.
 const U64 not_ab_file = 18229723555195321596ULL;
 
 const int bishop_relevant_bits[64] = {
@@ -459,33 +466,45 @@ U64 rook_masks[64];
 U64 bishop_attacks[64][512];
 U64 rook_attacks[64][4096];
 
+//Alle pion moves (met zwart/wit en welk vakje).
 U64 mask_pawn_attacks(int side, int square)
 {
+    //idk.
     U64 attacks = 0ULL;
     U64 bitboard = 0ULL;
 
+    //Een stuk op het bord zetten.
     set_bit(bitboard, square);
 
-    if (!side) // WHITE
+    //Als wit aan zet.
+    if (!side)
     {
+        //Vakje +7 is het vakje linksboven en vakje +9 is het vakje rechtsboven. Dat zijn de plekken die een witte pion kan aanvallen. Not_a_file en not_h_file zijn omdat de pion niet naar links kan slaan als die al helemaal links staat.
         if((bitboard >> 7) & not_a_file) attacks |= (bitboard >> 7);
         if ((bitboard >> 9) & not_h_file) attacks |= (bitboard >> 9);
     }
-    else // BLACK
+    //Als zwart aan zet.
+    else
     {
+        //Vakje -7 is het vakje rechtsonder en vakje -9 is het vakje linksboven. Dat zijn de plekken die een witte pion kan aanvallen. Not_a_file en not_h_file zijn omdat de pion niet naar links kan slaan als die al helemaal links staat.
         if ((bitboard << 7) & not_h_file) attacks |= (bitboard << 7);
         if ((bitboard << 9) & not_a_file) attacks |= (bitboard << 9);
     }
+    //Return alle attacks.
     return attacks;
 }
 
+//Alle paard moves.
 U64 mask_knight_attacks(int square)
 {
+    //idk.
     U64 attacks = 0Ull;
     U64 bitboard = 0ULL;
 
+    //Een stuk op het bord zetten.
     set_bit(bitboard, square);
 
+    //Alle kanten dat een paard op kan. Hierbij staan de nummers: 17, 15, 10 en 6 voor plekken omhoog en omlaag. Linksboven is hierbij 1 en rechtsonder plek 64.
     if ((bitboard >> 17) & not_h_file) attacks |= (bitboard >> 17);
     if ((bitboard >> 15) & not_a_file) attacks |= (bitboard >> 15);
     if ((bitboard >> 10) & not_gh_file) attacks |= (bitboard >> 10);
@@ -495,16 +514,21 @@ U64 mask_knight_attacks(int square)
     if ((bitboard << 10) & not_ab_file) attacks |= (bitboard << 10);
     if ((bitboard << 6) & not_gh_file) attacks |= (bitboard << 6);
 
+    //Return alle attacks.
     return attacks;
 }
 
+//Alle koning moves.
 U64 mask_king_attacks(int square)
 {
+    //idk
     U64 attacks = 0ULL;
     U64 bitboard = 0ULL;
 
+    //Een stuk op het bord zetten.
     set_bit(bitboard, square);
 
+    //Alle kanten dat een koning op kan. Hierbij staan de nummers: 8, 9, 7 en 1 voor plekken omhoog en omlaag. Linksboven is hierbij 1 en rechtsonder plek 64.
     if (bitboard >> 8) attacks |= (bitboard >> 8);
     if ((bitboard >> 9) & not_h_file) attacks |= (bitboard >> 9);
     if ((bitboard >> 7) & not_a_file) attacks |= (bitboard >> 7);
@@ -514,6 +538,7 @@ U64 mask_king_attacks(int square)
     if ((bitboard << 7) & not_h_file) attacks |= (bitboard << 7);
     if ((bitboard << 1) & not_a_file) attacks |= (bitboard << 1);
 
+    //Return alle attacks.
     return attacks;
 }
 
@@ -611,11 +636,16 @@ U64 rook_attacks_on_the_fly(int square, U64 block)
 
 void init_leapers_attacks()
 {
+    //Loop alle 64 vakjes zodat elk vakje is geweest.
     for (int square = 0; square < 64; square++)
     {
+        //Markeer elk vakje dat wordt aangevallen door een pion appart voor elk vakje van wit.
         pawn_attacks[white][square] = mask_pawn_attacks(white, square);
+        //Markeer elk vakje dat wordt aangevallen door een pion appart voor elk vakje van zwart.
         pawn_attacks[black][square] = mask_pawn_attacks(black, square);
+        //Markeer elk vakje dat wordt aangevallen door een paard appart voor elk vakje.
         knight_attacks[square] = mask_knight_attacks(square);
+        //Markeer elk vakje dat wordt aangevallen door een koning appart voor elk vakje.
         king_attacks[square] = mask_king_attacks(square);
     }
 }
