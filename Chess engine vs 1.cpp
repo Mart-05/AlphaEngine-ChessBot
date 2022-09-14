@@ -51,7 +51,7 @@ enum { wk = 1, wq = 2, bk = 4, bq = 8 };
 //Alle mogelijke stukken in het spel met hoofdletters voor witte stukken.
 enum { P, N, B, R, Q, K, p, n, b, r, q, k };
 
-//Vakje naar coördinaten: voor vertaling van computertaal naar mensentaal.
+//Vakje naar coÃ¶rdinaten: voor vertaling van computertaal naar mensentaal.
 const char* square_to_coordinates[] = {
     "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
     "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
@@ -541,14 +541,16 @@ U64 mask_king_attacks(int square)
     //Return alle attacks.
     return attacks;
 }
-
+// Bishop moves
 U64 mask_bishop_attacks(int square)
 {
     U64 attacks = 0ULL;
+    // Ranks (r) & files (f)
     int r, f;
+    // init target Ranks (r) & files (f) 
     int tr = square / 8;
     int tf = square % 8;
-
+// Waar kan bishop staan. Hierbij staan de nummers voor plekken waar de bishop naar toe kan gaan (r<=6 zodat hij niet uit het bord gaat). Linksboven is hierbij 1 en rechtsonder plek 64.
     for (r = tr + 1, f = tf + 1; r <= 6 && f <= 6; r++, f++) attacks |= (1ULL << (r * 8 + f));
     for (r = tr - 1, f = tf + 1; r >= 1 && f <= 6; r--, f++) attacks |= (1ULL << (r * 8 + f));
     for (r = tr + 1, f = tf - 1; r <= 6 && f >= 1; r++, f--) attacks |= (1ULL << (r * 8 + f));
@@ -556,14 +558,17 @@ U64 mask_bishop_attacks(int square)
 
     return attacks;
 }
-
+// Rook moves
 U64 mask_rook_attacks(int square)
 {
+    //resultaat van aanval
     U64 attacks = 0ULL;
+    //ranks & files
     int r, f;
+    //target ranks & files
     int tr = square / 8;
     int tf = square % 8;
-
+// waar kan rook staan. 
     for (r = tr + 1; r <= 6; r++) attacks |= (1ULL << (r * 8 + tf));
     for (r = tr - 1; r >= 1; r--) attacks |= (1ULL << (r * 8 + tf));
     for (f = tf + 1; f <= 6; f++) attacks |= (1ULL << (tr * 8 + f));
@@ -571,14 +576,17 @@ U64 mask_rook_attacks(int square)
 
     return attacks;
 }
-
+// generate bishop attacks on the fly (not skipping edges)
 U64 bishop_attacks_on_the_fly(int square, U64 block)
 {
     U64 attacks = 0ULL;
+    // ranks & files
     int r, f;
+    //init target ranks & files
     int tr = square / 8;
     int tf = square % 8;
 
+    // generate bishop attacks
     for (r = tr + 1, f = tf + 1; r <= 7 && f <= 7; r++, f++)
     {
         attacks |= (1ULL << (r * 8 + f));
@@ -603,13 +611,17 @@ U64 bishop_attacks_on_the_fly(int square, U64 block)
     return attacks;
 }
 
+// generate rook attacks on the fly (not skipping edges)
 U64 rook_attacks_on_the_fly(int square, U64 block)
 {
+ //result attacks
     U64 attacks = 0ULL;
+   //ranks & files
     int r, f;
     int tr = square / 8;
     int tf = square % 8;
 
+    //generate rook attacks
     for (r = tr + 1; r <= 7; r++)
     {
         attacks |= (1ULL << (r * 8 + tf));
