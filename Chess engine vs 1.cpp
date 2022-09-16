@@ -134,6 +134,8 @@ U64 generate_magic_number()
 BIT MANIP
 
 ***************/
+
+//Telt het aantal bits op het bitboard dat aan(1) staat.
 static inline int count_bits(U64 bitboard)
 {
     int count = 0;
@@ -145,12 +147,15 @@ static inline int count_bits(U64 bitboard)
     return count;
 }
 
+//Pak de eerste bit. Van linksboven naar rechtsonder. (ls1b = last significant 1st bit).
 static inline int get_ls1b_index(U64 bitboard)
 {
+    //Als bitboard niet gelijk is aan 0.
     if (bitboard)
     {
         return count_bits((bitboard & (~bitboard + 1)) - 1);
     }
+    //Als bitboard = 0.
     else return -1;
 }
 
@@ -300,6 +305,7 @@ const U64 not_gh_file = 4557430888798830399ULL;
 //Bitboard voor niet de a of b kolom.
 const U64 not_ab_file = 18229723555195321596ULL;
 
+//Aantal relevant vakjes dat de bishop aanvalt op elk vakje (zijden zijn niet relevant tenzij de bishop op een zijkant staat).
 const int bishop_relevant_bits[64] = {
     6, 5, 5, 5, 5, 5, 5, 6,
     5, 5, 5, 5, 5, 5, 5, 5,
@@ -311,6 +317,7 @@ const int bishop_relevant_bits[64] = {
     6, 5, 5, 5, 5, 5, 5, 6
 };
 
+//Aantal relevant vakjes dat de rook aanvalt op elk vakje (zijden zijn niet relevant tenzij de rook op een zijkant staat).
 const int rook_relevant_bits[64] = {
     12, 11, 11, 11, 11, 11, 11, 12,
     11, 10, 10, 10, 10, 10, 10, 11,
@@ -480,7 +487,7 @@ U64 mask_pawn_attacks(int side, int square)
     if (!side)
     {
         //Vakje +7 is het vakje linksboven en vakje +9 is het vakje rechtsboven. Dat zijn de plekken die een witte pion kan aanvallen. Not_a_file en not_h_file zijn omdat de pion niet naar links kan slaan als die al helemaal links staat.
-        if((bitboard >> 7) & not_a_file) attacks |= (bitboard >> 7);
+        if ((bitboard >> 7) & not_a_file) attacks |= (bitboard >> 7);
         if ((bitboard >> 9) & not_h_file) attacks |= (bitboard >> 9);
     }
     //Als zwart aan zet.
@@ -541,34 +548,40 @@ U64 mask_king_attacks(int square)
     //Return alle attacks.
     return attacks;
 }
-// Bishop moves
+//Alle bishop moves.
 U64 mask_bishop_attacks(int square)
 {
     U64 attacks = 0ULL;
-    // Ranks (r) & files (f)
+    
+    //Ranks (r) & files (f).
     int r, f;
-    // init target Ranks (r) & files (f) 
+    
+    //Init target Ranks (r) & files (f).
     int tr = square / 8;
     int tf = square % 8;
-// Waar kan bishop staan. Hierbij staan de nummers voor plekken waar de bishop naar toe kan gaan (r<=6 zodat hij niet uit het bord gaat). Linksboven is hierbij 1 en rechtsonder plek 64.
+    
+    //Waar kan bishop staan. Hierbij staan de nummers voor plekken waar de bishop naar toe kan gaan (r<=6 zodat hij niet uit het bord gaat). Linksboven is hierbij 1 en rechtsonder plek 64.
     for (r = tr + 1, f = tf + 1; r <= 6 && f <= 6; r++, f++) attacks |= (1ULL << (r * 8 + f));
     for (r = tr - 1, f = tf + 1; r >= 1 && f <= 6; r--, f++) attacks |= (1ULL << (r * 8 + f));
     for (r = tr + 1, f = tf - 1; r <= 6 && f >= 1; r++, f--) attacks |= (1ULL << (r * 8 + f));
     for (r = tr - 1, f = tf - 1; r >= 1 && f >= 1; r--, f--) attacks |= (1ULL << (r * 8 + f));
-
+    
     return attacks;
 }
-// Rook moves
+//Alle rook moves.
 U64 mask_rook_attacks(int square)
 {
-    //resultaat van aanval
+    //Resultaat van aanval.
     U64 attacks = 0ULL;
-    //ranks & files
+
+    //Ranks & files.
     int r, f;
-    //target ranks & files
+    
+    //Target ranks & files.
     int tr = square / 8;
     int tf = square % 8;
-// waar kan rook staan. 
+    
+    //Waar kan rook staan. 
     for (r = tr + 1; r <= 6; r++) attacks |= (1ULL << (r * 8 + tf));
     for (r = tr - 1; r >= 1; r--) attacks |= (1ULL << (r * 8 + tf));
     for (f = tf + 1; f <= 6; f++) attacks |= (1ULL << (tr * 8 + f));
@@ -576,17 +589,19 @@ U64 mask_rook_attacks(int square)
 
     return attacks;
 }
-// generate bishop attacks on the fly (not skipping edges)
+//Generate bishop attacks on the fly (zijkanten niet skippen).
 U64 bishop_attacks_on_the_fly(int square, U64 block)
 {
     U64 attacks = 0ULL;
-    // ranks & files
+    
+    //Ranks & files.
     int r, f;
-    //init target ranks & files
+
+    //Init target ranks & files.
     int tr = square / 8;
     int tf = square % 8;
 
-    // generate bishop attacks
+    //Generate bishop attacks.
     for (r = tr + 1, f = tf + 1; r <= 7 && f <= 7; r++, f++)
     {
         attacks |= (1ULL << (r * 8 + f));
@@ -611,17 +626,18 @@ U64 bishop_attacks_on_the_fly(int square, U64 block)
     return attacks;
 }
 
-// generate rook attacks on the fly (not skipping edges)
+//Generate rook attacks on the fly (zijkanten niet skippen).
 U64 rook_attacks_on_the_fly(int square, U64 block)
 {
- //result attacks
+    //Result attacks.
     U64 attacks = 0ULL;
-   //ranks & files
+
+    //Ranks & files.
     int r, f;
     int tr = square / 8;
     int tf = square % 8;
 
-    //generate rook attacks
+    //Generate rook attacks.
     for (r = tr + 1; r <= 7; r++)
     {
         attacks |= (1ULL << (r * 8 + tf));
@@ -642,7 +658,7 @@ U64 rook_attacks_on_the_fly(int square, U64 block)
         attacks |= (1ULL << (tr * 8 + f));
         if ((1ULL << (tr * 8 + f)) & block) break;
     }
-
+        
     return attacks;
 }
 
@@ -651,32 +667,38 @@ void init_leapers_attacks()
     //Loop alle 64 vakjes zodat elk vakje is geweest.
     for (int square = 0; square < 64; square++)
     {
-        //Markeer elk vakje dat wordt aangevallen door een pion appart voor elk vakje van wit.
+        //Mask elk vakje dat wordt aangevallen door een pion appart voor elk vakje van wit.
         pawn_attacks[white][square] = mask_pawn_attacks(white, square);
-        //Markeer elk vakje dat wordt aangevallen door een pion appart voor elk vakje van zwart.
+        //Mask elk vakje dat wordt aangevallen door een pion appart voor elk vakje van zwart.
         pawn_attacks[black][square] = mask_pawn_attacks(black, square);
-        //Markeer elk vakje dat wordt aangevallen door een paard appart voor elk vakje.
+        //Mask elk vakje dat wordt aangevallen door een paard appart voor elk vakje.
         knight_attacks[square] = mask_knight_attacks(square);
-        //Markeer elk vakje dat wordt aangevallen door een koning appart voor elk vakje.
+        //Mask elk vakje dat wordt aangevallen door een koning appart voor elk vakje.
         king_attacks[square] = mask_king_attacks(square);
     }
 }
 
+//Alle mogelijke manieren om een attack mask te hebben. 
 U64 set_occupancy(int index, int bits_in_mask, U64 attack_mask)
 {
     U64 occupancy = 0ULL;
 
+    //Loop het aantal keer als bits in een mask.
     for (int count = 0; count < bits_in_mask; count++)
     {
+        //Square = eerste bit van linksboven naar rechtsonder.
         int square = get_ls1b_index(attack_mask);
 
+        //Weghalen bit.
         pop_bit(attack_mask, square);
+        
+        //Lefshift 1 met count.
         if (index & (1 << count))
         {
             occupancy |= (1ULL << square);
         }
     }
-
+    //return occupancy
     return occupancy;
 }
 
@@ -712,7 +734,7 @@ U64 find_magic_number(int square, int relevant_bits, int bishop)
 
         for (index = 0, fail = 0; !fail && index < occupancy_indicies; index++)
         {
-            int magic_index = (int) ((occupancies[index] * magic_number) >> (64 - relevant_bits));
+            int magic_index = (int)((occupancies[index] * magic_number) >> (64 - relevant_bits));
 
             if (used_attacks[magic_index] == 0ULL)
                 used_attacks[magic_index] = attacks[index];
@@ -1049,7 +1071,7 @@ static inline int make_move(int move, int move_flag)
     }
 }
 
-static inline void generate_moves(moves *move_list)
+static inline void generate_moves(moves* move_list)
 {
     move_list->count = 0;
     int source_square, target_square;
@@ -1240,7 +1262,8 @@ static inline void generate_moves(moves *move_list)
                     if (!get_bit(((side == white) ? occupancies[black] : occupancies[white]), target_square))
                     {
                         add_move(move_list, encode_move(source_square, target_square, piece, 0, 0, 0, 0, 0));
-                    } else add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
+                    }
+                    else add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
                     pop_bit(attacks, target_square);
                 }
                 pop_bit(bitboard, source_square);
@@ -1451,14 +1474,14 @@ static inline int evaluate()
             case N: score += knight_score[square]; break;
             case B: score += bishop_score[square]; break;
             case R: score += rook_score[square]; break;
-            //case Q: score += queen_score[square]; break;
+                //case Q: score += queen_score[square]; break;
             case K: score += king_score[square]; break;
 
             case p: score -= pawn_score[mirror_score[square]]; break;
             case n: score -= knight_score[mirror_score[square]]; break;
             case b: score -= bishop_score[mirror_score[square]]; break;
             case r: score -= rook_score[mirror_score[square]]; break;
-            //case q: score -= queen_score[mirror_score[square]]; break;
+                //case q: score -= queen_score[mirror_score[square]]; break;
             case k: score -= king_score[mirror_score[square]]; break;
             }
 
@@ -1558,7 +1581,7 @@ static inline int score_move(int move)
 
 static inline int sort_moves(moves* move_list)
 {
-    int *move_scores = new int[move_list->count];
+    int* move_scores = new int[move_list->count];
 
     for (int count = 0; count < move_list->count; count++)
         move_scores[count] = score_move(move_list->moves[count]);
@@ -1693,7 +1716,8 @@ static inline int negamax(int alpha, int beta, int depth)
             score = -negamax(-alpha - 1, -alpha, depth - 1);
             if ((score > alpha) && (score < beta))
                 score = -negamax(-beta, -alpha, depth - 1);
-        } else
+        }
+        else
             score = -negamax(-beta, -alpha, depth - 1);
 
         ply--;
@@ -1976,7 +2000,8 @@ int main()
         print_move_scores(move_list);
         sort_moves(move_list);
         print_move_scores(move_list);*/
-    } else uci_loop();
+    }
+    else uci_loop();
 
     return 0;
 }
