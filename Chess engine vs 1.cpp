@@ -328,7 +328,7 @@ const int rook_relevant_bits[64] = {
     11, 10, 10, 10, 10, 10, 10, 11,
     12, 11, 11, 11, 11, 11, 11, 12
 };
-
+\\rook magic numbers
 U64 rook_magic_numbers[64] = {
     0x8a80104000800020ULL,
     0x140002000100040ULL,
@@ -395,7 +395,7 @@ U64 rook_magic_numbers[64] = {
     0x2006104900a0804ULL,
     0x1004081002402ULL
 };
-
+\\bishop magic numbers
 U64 bishop_magic_numbers[64] = {
     0x40040844404084ULL,
     0x2004208a004208ULL,
@@ -703,67 +703,98 @@ U64 set_occupancy(int index, int bits_in_mask, U64 attack_mask)
 }
 
 
-/**************
+/*****************************************\
 
-MAGIC
+                  MAGICS
 
-***************/
+\*****************************************/
+//Het vinden van magic number
 U64 find_magic_number(int square, int relevant_bits, int bishop)
 {
+    //init occupancy array
     U64 occupancies[4096];
+   
+    //init attack tables
     U64 attacks[4096];
+   
+    //init used attacks
     U64 used_attacks[4096];
+    
 
+    //init attack mask for a current piece
     U64 attack_mask = bishop ? mask_bishop_attacks(square) : mask_rook_attacks(square);
+   
+    //init occupancy indicies
     int occupancy_indicies = 1 << relevant_bits;
 
+    //loop over occupancy indicies (welke occupancies zijn mogelijk)
     for (int index = 0; index < occupancy_indicies; index++)
     {
+        //init occupancies
         occupancies[index] = set_occupancy(index, relevant_bits, attack_mask);
+        
+        //init attacks 
         attacks[index] = bishop ? bishop_attacks_on_the_fly(square, occupancies[index]) : rook_attacks_on_the_fly(square, occupancies[index]);
     }
 
+    //test magic numbers loop
     for (int random_count = 0; random_count < 100000000; random_count++)
     {
+        // generate magic number canditate --> na tests moet het blijken of het de echte is
         U64 magic_number = generate_magic_number();
+       
+        // skip inappropriate magic numebrs
         if (count_bits((attack_mask * magic_number) & 0xFF00000000000000) < 6) continue;
 
+        //init used attacks 
         memset(used_attacks, 0ULL, sizeof(used_attacks));
 
+        //init index & fail flag
         int index, fail;
 
+        //test magic index loop
         for (index = 0, fail = 0; !fail && index < occupancy_indicies; index++)
         {
+            //init magic index
             int magic_index = (int)((occupancies[index] * magic_number) >> (64 - relevant_bits));
 
+            //if magic index works
             if (used_attacks[magic_index] == 0ULL)
+                //init used attacks
                 used_attacks[magic_index] = attacks[index];
+           //otherwise
             else if (used_attacks[magic_index] != attacks[index])
+               //magic index doesnt work
                 fail = 1;
         }
-
+        //if magic number works -->
         if (!fail)
             return magic_number;
     }
+  //if magic number doesnt work
     std::printf("  Magic number fails!");
     return 0ULL;
 }
-
+//init magic numbers
 void init_magic_numbers()
 {
+   // loop over 64 bit squares
     for (int square = 0; square < 64; square++)
     {
+       //init rook magic numbers
         std::printf("0x%llxULL\n", find_magic_number(square, rook_relevant_bits[square], rook));
     }
+    // duidelijk verschil tussen magic numbers
     std::printf("\n\n\n");
     for (int square = 0; square < 64; square++)
     {
         std::printf("0x%llxULL\n", find_magic_number(square, bishop_relevant_bits[square], bishop));
     }
 }
-
+//init magic numbers
 void init_sliders_attacks(int bishop)
 {
+    // loop over 64bit square
     for (int square = 0; square < 64; square++)
     {
         bishop_masks[square] = mask_bishop_attacks(square);
