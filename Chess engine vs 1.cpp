@@ -94,23 +94,33 @@ int castle;
 /**************
 
 RANDOMS
+Dit geeft altijd dezelfde nummers in dezelfde volgorde want gaat volgens een algortime.
 
 ***************/
+//Pseudo random number state, lijkt random maar is volgens een algoritme (Xor shift).
 unsigned int state = 1804289383;
 
+//Maak een 32-bit pseudo random number.
 unsigned int get_random_U32_number()
 {
+    //Krijg state die het op dat moment is.
     unsigned int number = state;
 
+    //Xor shift algorithm. (32-bit pseudo random generator algorithm)
+    //Number = number ^ leftshift met 13 bits.
     number ^= number << 13;
+    //Number = number ^ rightshift met 17 bits.
     number ^= number >> 17;
+    //Number = number ^ leftshift met 5 bits.
     number ^= number << 5;
 
+    //Update number naar state.
     state = number;
 
     return number;
 }
 
+//Maak een 64-bit pseudo random number.
 U64 get_random_U64_number()
 {
     U64 n1, n2, n3, n4;
