@@ -842,13 +842,15 @@ static inline U64 get_bishop_attacks(int square, U64 occupancy)
 
     return bishop_attacks[square][occupancy];
 }
-
+//get rook attacks
 static inline U64 get_rook_attacks(int square, U64 occupancy)
 {
+    //get bishop attacks assuming current board occupancy
     occupancy &= rook_masks[square];
     occupancy *= rook_magic_numbers[square];
     occupancy >>= 64 - rook_relevant_bits[square];
 
+    //return rook attacks
     return rook_attacks[square][occupancy];
 }
 
