@@ -123,18 +123,23 @@ unsigned int get_random_U32_number()
 //Maak een 64-bit pseudo random number.
 U64 get_random_U64_number()
 {
+    //Namen voor 4 verschillende random nummers.
     U64 n1, n2, n3, n4;
 
+    //Geef de 4 random nummers waardes en "slice" ze naar 16-bit.
     n1 = (U64)(get_random_U32_number()) & 0xFFFF;
     n2 = (U64)(get_random_U32_number()) & 0xFFFF;
     n3 = (U64)(get_random_U32_number()) & 0xFFFF;
     n4 = (U64)(get_random_U32_number()) & 0xFFFF;
 
+    //Zet ze achter elkaar en niet op elkaar (elke random nummer bestaat uit 16 bits).
     return n1 | (n2 << 16) | (n3 << 32) | (n4 << 48);
 }
 
+//Maak magic number mogelijkheden.
 U64 generate_magic_number()
 {
+    //Alleen de bits die bij alle 3 de random nummers 1 zijn.
     return get_random_U64_number() & get_random_U64_number() & get_random_U64_number();
 }
 
@@ -338,7 +343,8 @@ const int rook_relevant_bits[64] = {
     11, 10, 10, 10, 10, 10, 10, 11,
     12, 11, 11, 11, 11, 11, 11, 12
 };
-\\rook magic numbers
+
+//rook magic numbers
 U64 rook_magic_numbers[64] = {
     0x8a80104000800020ULL,
     0x140002000100040ULL,
@@ -405,7 +411,8 @@ U64 rook_magic_numbers[64] = {
     0x2006104900a0804ULL,
     0x1004081002402ULL
 };
-\\bishop magic numbers
+
+//bishop magic numbers
 U64 bishop_magic_numbers[64] = {
     0x40040844404084ULL,
     0x2004208a004208ULL,
@@ -473,14 +480,21 @@ U64 bishop_magic_numbers[64] = {
     0x4010011029020020ULL
 };
 
+//Pawn attack table[kant][vakje].
 U64 pawn_attacks[2][64];
+//Paard attack table[vakje].
 U64 knight_attacks[64];
+//Koning attack table[vakje].
 U64 king_attacks[64];
 
+//Bishop attack masks[vakje].
 U64 bishop_masks[64];
+//Rook attack masks[vakje].
 U64 rook_masks[64];
 
+//Bishop attack table[vakje][occupencies].
 U64 bishop_attacks[64][512];
+//Rook attack table[vakje][occupencies].
 U64 rook_attacks[64][4096];
 
 //Alle pion moves (met zwart/wit en welk vakje).
@@ -562,20 +576,20 @@ U64 mask_king_attacks(int square)
 U64 mask_bishop_attacks(int square)
 {
     U64 attacks = 0ULL;
-    
+
     //Ranks (r) & files (f).
     int r, f;
-    
+
     //Init target Ranks (r) & files (f).
     int tr = square / 8;
     int tf = square % 8;
-    
+
     //Waar kan bishop staan. Hierbij staan de nummers voor plekken waar de bishop naar toe kan gaan (r<=6 zodat hij niet uit het bord gaat). Linksboven is hierbij 1 en rechtsonder plek 64.
     for (r = tr + 1, f = tf + 1; r <= 6 && f <= 6; r++, f++) attacks |= (1ULL << (r * 8 + f));
     for (r = tr - 1, f = tf + 1; r >= 1 && f <= 6; r--, f++) attacks |= (1ULL << (r * 8 + f));
     for (r = tr + 1, f = tf - 1; r <= 6 && f >= 1; r++, f--) attacks |= (1ULL << (r * 8 + f));
     for (r = tr - 1, f = tf - 1; r >= 1 && f >= 1; r--, f--) attacks |= (1ULL << (r * 8 + f));
-    
+
     return attacks;
 }
 //Alle rook moves.
@@ -586,11 +600,11 @@ U64 mask_rook_attacks(int square)
 
     //Ranks & files.
     int r, f;
-    
+
     //Target ranks & files.
     int tr = square / 8;
     int tf = square % 8;
-    
+
     //Waar kan rook staan. 
     for (r = tr + 1; r <= 6; r++) attacks |= (1ULL << (r * 8 + tf));
     for (r = tr - 1; r >= 1; r--) attacks |= (1ULL << (r * 8 + tf));
@@ -603,7 +617,7 @@ U64 mask_rook_attacks(int square)
 U64 bishop_attacks_on_the_fly(int square, U64 block)
 {
     U64 attacks = 0ULL;
-    
+
     //Ranks & files.
     int r, f;
 
@@ -668,7 +682,7 @@ U64 rook_attacks_on_the_fly(int square, U64 block)
         attacks |= (1ULL << (tr * 8 + f));
         if ((1ULL << (tr * 8 + f)) & block) break;
     }
-        
+
     return attacks;
 }
 
@@ -701,7 +715,7 @@ U64 set_occupancy(int index, int bits_in_mask, U64 attack_mask)
 
         //Weghalen bit.
         pop_bit(attack_mask, square);
-        
+
         //Lefshift 1 met count.
         if (index & (1 << count))
         {
@@ -723,17 +737,17 @@ U64 find_magic_number(int square, int relevant_bits, int bishop)
 {
     //init occupancy array
     U64 occupancies[4096];
-   
+
     //init attack tables
     U64 attacks[4096];
-   
+
     //init used attacks
     U64 used_attacks[4096];
-    
 
-    //init attack mask for a current piece
+
+    //Als attack_mask = bishop, dan mask_bishop_attacks. Anders mask_rook_attacks.
     U64 attack_mask = bishop ? mask_bishop_attacks(square) : mask_rook_attacks(square);
-   
+
     //init occupancy indicies
     int occupancy_indicies = 1 << relevant_bits;
 
@@ -742,8 +756,8 @@ U64 find_magic_number(int square, int relevant_bits, int bishop)
     {
         //init occupancies
         occupancies[index] = set_occupancy(index, relevant_bits, attack_mask);
-        
-        //init attacks 
+
+        //init attacks: Als attacks[index] = bishop, dan bishop attacks, anders rook attacks.
         attacks[index] = bishop ? bishop_attacks_on_the_fly(square, occupancies[index]) : rook_attacks_on_the_fly(square, occupancies[index]);
     }
 
@@ -752,7 +766,7 @@ U64 find_magic_number(int square, int relevant_bits, int bishop)
     {
         // generate magic number canditate --> na tests moet het blijken of het de echte is
         U64 magic_number = generate_magic_number();
-       
+
         // skip inappropriate magic numebrs
         if (count_bits((attack_mask * magic_number) & 0xFF00000000000000) < 6) continue;
 
@@ -772,26 +786,26 @@ U64 find_magic_number(int square, int relevant_bits, int bishop)
             if (used_attacks[magic_index] == 0ULL)
                 //init used attacks
                 used_attacks[magic_index] = attacks[index];
-           //otherwise
+            //otherwise
             else if (used_attacks[magic_index] != attacks[index])
-               //magic index doesnt work
+                //magic index doesnt work
                 fail = 1;
         }
         //if magic number works -->
         if (!fail)
             return magic_number;
     }
-  //if magic number doesnt work
+    //if magic number doesnt work
     std::printf("  Magic number fails!");
     return 0ULL;
 }
 //init magic numbers
 void init_magic_numbers()
 {
-   // loop over 64 bit squares
+    // loop over 64 bit squares
     for (int square = 0; square < 64; square++)
     {
-       //init rook magic numbers
+        //init rook magic numbers
         std::printf("0x%llxULL\n", find_magic_number(square, rook_relevant_bits[square], rook));
     }
     // duidelijk verschil tussen magic numbers
@@ -801,39 +815,50 @@ void init_magic_numbers()
         std::printf("0x%llxULL\n", find_magic_number(square, bishop_relevant_bits[square], bishop));
     }
 }
-//init magic numbers
+//Init sliders attack table.
 void init_sliders_attacks(int bishop)
 {
-    // loop over 64bit square
+    //Loop over alle 64 vakjes.
     for (int square = 0; square < 64; square++)
     {
+        //Init bishop & rook masks.
         bishop_masks[square] = mask_bishop_attacks(square);
         rook_masks[square] = mask_rook_attacks(square);
 
+        //Init current mask. Als bishop, dan bishop masks. Als geen bishop, dan rook masks.
         U64 attack_mask = bishop ? bishop_masks[square] : rook_masks[square];
 
+        //Init occupancy_indicies.
         int occupancy_indicies = (1 << count_bits(attack_mask));
 
+        //Loop alle occupency indicies.
         for (int index = 0; index < occupancy_indicies; index++)
         {
+            //Bishop
             if (bishop)
             {
+                //Init current occupency
                 U64 occupancy = set_occupancy(index, bishop_relevant_bits[square], attack_mask);
+                //Init current index
                 int magic_index = (occupancy * bishop_magic_numbers[square]) >> (64 - bishop_relevant_bits[square]);
-
+                //Init bishop attacks
                 bishop_attacks[square][magic_index] = bishop_attacks_on_the_fly(square, occupancy);
             }
+            //rook
             else
             {
+                //Init current occupency
                 U64 occupancy = set_occupancy(index, rook_relevant_bits[square], attack_mask);
+                //Init current index
                 int magic_index = (occupancy * rook_magic_numbers[square]) >> (64 - rook_relevant_bits[square]);
-
+                //Init rook attacks
                 rook_attacks[square][magic_index] = rook_attacks_on_the_fly(square, occupancy);
             }
         }
     }
 }
 
+//Bishop attacks krijgen.
 static inline U64 get_bishop_attacks(int square, U64 occupancy)
 {
     occupancy &= bishop_masks[square];
@@ -1964,6 +1989,7 @@ void uci_loop()
 MAIN DRIVER
 
 ***************/
+//Initiate alle rook en bishop attacks.
 void init_all()
 {
     init_leapers_attacks();
