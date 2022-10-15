@@ -987,34 +987,51 @@ void print_move_list(moves* move_list)
 Move Gen
 
 ***************/
+//Of een vak wordt aangevallen door de gegeven kant (of wit of zwart)
 static inline int is_square_attacked(int square, int side)
 {
+    //De vakken die worden aangevallen door witte pion
     if ((side == white) && (pawn_attacks[black][square] & bitboards[P])) return 1;
+    //De vakken die worden aangevallen door zwarte pion
     if ((side == black) && (pawn_attacks[white][square] & bitboards[p])) return 1;
+    //De vakken die worden aangevallen door paard wit of zwart
     if (knight_attacks[square] & ((!side) ? bitboards[N] : bitboards[n])) return 1;
+    //De vakken die worden aangevallen door loper wit en zwart
     if (get_bishop_attacks(square, occupancies[both]) & ((!side) ? bitboards[B] : bitboards[b])) return 1;
+    //De vakken die worden aangevallen door toren wit of zwart
     if (get_rook_attacks(square, occupancies[both]) & ((!side) ? bitboards[R] : bitboards[r])) return 1;
+    //De vakken die worden aangevallen door koningin wit of zwart
     if (get_queen_attacks(square, occupancies[both]) & ((!side) ? bitboards[Q] : bitboards[q])) return 1;
+   
+    //De vakken die worden aangevallen door koning (wit/zwart)
     if (king_attacks[square] & ((!side) ? bitboards[K] : bitboards[k])) return 1;
+    //Als niks het aanvalt
     return 0;
 }
-
+// Het printen van de aangevallen vakjes
 void print_attacked_squares(int side)
 {
     std::printf("\n");
+    //Loop over de rijen
     for (int rank = 0; rank < 8; rank++)
     {
+        //loop over bort kollommen
         for (int file = 0; file < 8; file++)
         {
+            //convert f&r --> square
             int square = rank * 8 + file;
+           //print files (als file =/ 0, dan -->
             if (!file)
             {
                 std::printf("  %d  ", 8 - rank);
             }
+            // checken of het vakje wordt aangevallen
             std::printf("%d ", is_square_attacked(square, side) ? 1 : 0);
         }
+        //nieuwe lijn elke rij
         std::printf("\n");
     }
+   //print rijen
     std::printf("\n     a b c d e f g h\n\n");
 }
 
@@ -1992,6 +2009,7 @@ MAIN DRIVER
 //Initiate alle rook en bishop attacks.
 void init_all()
 {
+    //Initiate de verschillende aanvallen
     init_leapers_attacks();
     init_sliders_attacks(bishop);
     init_sliders_attacks(rook);
