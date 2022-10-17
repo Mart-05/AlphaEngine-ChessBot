@@ -858,24 +858,31 @@ void init_sliders_attacks(int bishop)
     }
 }
 
-//Bishop attacks krijgen.
+//Bishop attacks krijgen. Dit zijn nu echt de bits die de bishop aanvalt.
 static inline U64 get_bishop_attacks(int square, U64 occupancy)
 {
+    //Als er een bishop op een vakje staat.
     occupancy &= bishop_masks[square];
+    //Vakje maal magic number.
     occupancy *= bishop_magic_numbers[square];
+    //Bits rightshifted met 64-aantal relevant bits.
     occupancy >>= 64 - bishop_relevant_bits[square];
 
+    //Krijg bishop attacks
     return bishop_attacks[square][occupancy];
 }
-//get rook attacks
+
+//Toren attacks krijgen. Dit zijn nu echt de bits die de toren aanvalt.
 static inline U64 get_rook_attacks(int square, U64 occupancy)
 {
-    //get bishop attacks assuming current board occupancy
+    //Als er een toren op een vakje staat
     occupancy &= rook_masks[square];
+    //Vakje maal magic number.
     occupancy *= rook_magic_numbers[square];
+    //Bits rightshifted met 64-aantal relevant bits.
     occupancy >>= 64 - rook_relevant_bits[square];
 
-    //return rook attacks
+    //Krijg toren attacks.
     return rook_attacks[square][occupancy];
 }
 
