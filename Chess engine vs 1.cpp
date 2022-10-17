@@ -994,7 +994,7 @@ void print_move_list(moves* move_list)
 Move Gen
 
 ***************/
-//Of een vak wordt aangevallen door de gegeven kant (of wit of zwart)
+//Of een vak wordt aangevallen door de gegeven kant (of wit of zwart): belangrijk voor snelheid, want illegale moves worden niet berekend
 static inline int is_square_attacked(int square, int side)
 {
     //De vakken die worden aangevallen door witte pion
@@ -1038,10 +1038,11 @@ void print_attacked_squares(int side)
         //nieuwe lijn elke rij
         std::printf("\n");
     }
-   //print rijen
+   // print rijen
     std::printf("\n     a b c d e f g h\n\n");
 }
 
+// 
 enum { all_moves, only_captures };
 
 const int castling_rights[64] = {
@@ -1162,16 +1163,22 @@ static inline int make_move(int move, int move_flag)
         else return 0;
     }
 }
-
+// generate all moves
 static inline void generate_moves(moves* move_list)
 {
     move_list->count = 0;
+    //definieer waar het stuk staat en waar het naartoe gaat
     int source_square, target_square;
+   
+    // definieer hoe het bitboard van het huidige stuk eruitziet & z'n aanvallen en maak er een kopie die wordt geloopt (meer info: vid 23 12:00=18:00) 
     U64 bitboard, attacks;
 
+    // loop over alle bitboards
     for (int piece = P; piece <= k; piece++)
     {
+        //init stuk bitboard kopie
         bitboard = bitboards[piece];
+        //generate witte pionnen moves en witte koning rokeer moves (vid 23+)
         if (side == white)
         {
             if (piece == P)
@@ -1256,6 +1263,7 @@ static inline void generate_moves(moves* move_list)
                 }
             }
         }
+        //generate zwarte pion bewegingen en zwarte koning rokeer moves 
         else
         {
             if (piece == p)
