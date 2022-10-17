@@ -16,6 +16,7 @@ MACROS
 #define get_bit(bitboard, square) ((bitboard) & (1ULL << (square)))
 #define pop_bit(bitboard, square) ((bitboard) &= ~(1ULL << (square)))
 
+//Nuttige posities voor debuggen.
 #define empty_board "8/8/8/8/8/8/8/8 w - - "
 #define start_position "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "
 #define tricky_position "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 "
@@ -29,7 +30,6 @@ MACROS
 
 BOARD ENUM
 
-Vraag: Idee dat de enum een naam missen!?
 ***************/
 //Rij voor namen van vakjes op het spelbord. Hiermee kan je de computer vertellen print ... of vakje c4 en dan doet die dat. (en mogelijkheden voor kleur/stukken die met lijnen gaan).
 enum {
@@ -43,7 +43,9 @@ enum {
     a1, b1, c1, d1, e1, f1, g1, h1, no_sq
 };
 
+//Mogelijkheden voor soorten bitboards.
 enum { white, black, both };
+//Sliding pieces.
 enum { rook, bishop };
 
 //Kleuren en kant voor mogelijke toegestane casteling (schaakmove) aangegeven in bits. Hierbij staat w voor white, b voor black, q voor queenside en k voor kingside.
@@ -82,8 +84,9 @@ std::map<char, int> char_pieces = {
     {'k', k}
 };
 
-//Vraag: Geen idee waar dit voor is!?
+//Aantal bitboards per stuk, p,r,n,b,q,k voor wit en zwart is 12.
 U64 bitboards[12];
+//Aantal bitboards voor wit, zwart en beide.
 U64 occupancies[3];
 
 //Game states: Kant, enpassant mogelijkheid en castling mogelijkheid.
