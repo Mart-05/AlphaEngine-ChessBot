@@ -207,34 +207,48 @@ void print_bitboard(U64 bitboard)
     std::printf("     Bitboard: %llu\n\n", bitboard);
 }
 
+//Print board.
 void print_board()
 {
+    //Nieuwe regel.
     std::printf("\n");
+    //Loop ranks.
     for (int rank = 0; rank < 8; rank++)
     {
+        //Loop files.
         for (int file = 0; file < 8; file++)
         {
+            //Geef vakjes nummers van 1 tot 64
             int square = rank * 8 + file;
 
+            //Print 1 tot 9 links van het bord voor rijen.
             if (!file)
             {
                 std::printf("  %d ", 8 - rank);
             }
-
+            
+            //Deffinieer variabele piece.
             int piece = -1;
 
+            //Voor alle stukken, kijken welk stuk het is.
             for (int bitboard_piece = P; bitboard_piece <= k; bitboard_piece++)
             {
                 if (get_bit(bitboards[bitboard_piece], square)) piece = bitboard_piece;
             }
 
+            //Als geen stuk, dan ".", als wel een stuk, print het stuk op een 8x8 veld.
             std::printf(" %c", (piece == -1) ? '.' : ascii_pieces[piece]);
         }
+        //Nieuwe regel.
         std::printf("\n");
     }
+    //Print a tot h onderaan.
     std::printf("\n     a b c d e f g h\n\n");
+    //Print kant aan zet.
     std::printf("  Side:        %s\n", !side ? "White" : "Black");
+    //Print enpassant mogelijheden.
     std::printf("  Enpassant:   %s\n", (enpassant != no_sq) ? square_to_coordinates[enpassant] : "No");
+    //Print castling mogelijkheden.
     std::printf("  Castling:    %c%c%c%c\n\n",
         (castle & wk) ? 'K' : '-',
         (castle & wq) ? 'Q' : '-',
@@ -242,39 +256,58 @@ void print_board()
         (castle & bq) ? 'q' : '-');
 }
 
+//Fen naar board.
 void parse_fen(const char* fen)
 {
-    //Reset gamestate
+    //Reset bitboard naar alles 0.
     memset(bitboards, 0ULL, sizeof(bitboards));
+    //Reset occupancies
     memset(occupancies, 0ULL, sizeof(occupancies));
+    //Reset game states/variables.
     side = 0;
     enpassant = no_sq;
     castle = 0;
 
+    //Loop over elk vakje en teken in de fen dat geen spatie is.
     for (int square = 0; square < 64 && *fen && *fen != ' ';)
     {
+        //Als een stuk, dan...
         if ((*fen >= 'b' && *fen <= 'r') || (*fen >= 'B' && *fen <= 'R'))
         {
+            //Kijken welk stuk (decoden).
             int piece = char_pieces[*fen];
+            //Zet een bit op het goede bitboard van dat stuk op de goede plek.
             set_bit(bitboards[piece], square);
+            //Volgende vakje.
             square++;
+            //Volgende teken in fen.
             fen++;
         }
+        //Anders als er een cijfer staat:
         else if (*fen >= '1' && *fen <= '8')
         {
+            //Stel offset gelijk aan cijfer dat in de fen staat.
             int offset = *fen - '0';
+            //Ga het aantal offset vakjes verder.
             square += offset;
+            //Volgende teken in fen.
             fen++;
         }
+        //Alle overigen:
         else
         {
+            //Volgende teken in fen.
             fen++;
         }
     }
 
+    //Weer volgende teken in fen.
     fen++;
+    //Wie is aan zet.
     (*fen == 'w') ? (side = white) : (side = black);
+    //Twee tekens overslaan in fen.
     fen += 2;
+    //Zolang fen =geen spatie, kijk naar castlingmogelijkheden.
     while (*fen != ' ')
     {
         switch (*fen)
@@ -285,22 +318,30 @@ void parse_fen(const char* fen)
         case 'q': castle |= bq; break;
         case '-': break;
         }
+        //Volgende teken in fen.
         fen++;
     }
+    //Volgende teken in fen.
     fen++;
+    //Als teken in fen geen streepje is:
     if (*fen != '-')
     {
+        //Geef het vakje aan dat enpassant kan worden geslagen.
         int file = fen[0] - 'a';
         int rank = 8 - (fen[1] - '0');
         enpassant = rank * 8 + file;
     }
+    //Anders:
     else
     {
         enpassant = no_sq;
     }
 
+    //Occupancies voor wit.
     for (int piece = P; piece <= K; piece++) occupancies[white] |= bitboards[piece];
+    //Occupancies voor zwart.
     for (int piece = p; piece <= k; piece++) occupancies[black] |= bitboards[piece];
+    //Occupancies voor beide.
     occupancies[both] |= occupancies[white];
     occupancies[both] |= occupancies[black];
 }
