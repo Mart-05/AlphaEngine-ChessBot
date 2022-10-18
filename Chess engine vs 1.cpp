@@ -962,18 +962,25 @@ Encoding moves
 #define get_move_enpassant(move) (move & 0x400000)
 #define get_move_castling(move) (move & 0x800000)
 
+//movelist structure
 typedef struct {
+    //moves
     int moves[256];
+    // Move count (ofwel het bijhouden van index van de move)
     int count;
 
 } moves;
 
+// toevoegen van moves aan de movelist
 static inline void add_move(moves* move_list, int move)
 {
+    //Store moves
     move_list->moves[move_list->count] = move;
+    //Vergroot move count
     move_list->count++;
 }
 
+// Promoted pieces
 std::map<int, char> promoted_pieces = {
     {Q, 'q'},
     {R, 'r'},
@@ -985,6 +992,7 @@ std::map<int, char> promoted_pieces = {
     {n, 'n'}
 };
 
+// Print move (UCI purposes)
 void print_move(int move)
 {
     if (get_move_promoted(move))
@@ -997,7 +1005,7 @@ void print_move(int move)
             square_to_coordinates[get_move_source(move)],
             square_to_coordinates[get_move_target(move)]);
 }
-
+// Print move list (voor debuggen)
 void print_move_list(moves* move_list)
 {
     if (!move_list->count)
@@ -1006,9 +1014,12 @@ void print_move_list(moves* move_list)
         return;
     }
     printf("\n  move    piece   capture   double    enpass    castling\n\n");
+    //loop over moves within move list
     for (int move_count = 0; move_count < move_list->count; move_count++)
     {
-        int move = move_list->moves[move_count];
+        //init move
+        int move = move_list->moves[move_count];       
+        //print move
         std::printf("  %s%s%c   %c       %d         %d         %d         %d\n",
             square_to_coordinates[get_move_source(move)],
             square_to_coordinates[get_move_target(move)],
@@ -1019,6 +1030,7 @@ void print_move_list(moves* move_list)
             get_move_enpassant(move) ? 1 : 0,
             get_move_castling(move) ? 1 : 0);
     }
+    // Total number of moves
     std::printf("\n\n  Total movecount: %d\n\n", move_list->count);
 }
 
