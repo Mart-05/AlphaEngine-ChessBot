@@ -1257,7 +1257,7 @@ static inline void generate_moves(moves* move_list)
                         //Als het vakje op de laatste rij is, dan promotie.
                         if (source_square >= a7 && source_square <= h7)
                         {
-                            //Promoties.
+                            //Voeg de zet toe aan de mogelijke zetten (Promoties).
                             add_move(move_list, encode_move(source_square, target_square, piece, Q, 0, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, R, 0, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, B, 0, 0, 0, 0));
@@ -1267,11 +1267,12 @@ static inline void generate_moves(moves* move_list)
                         //Als vakje niet op laatste rij.
                         else
                         {
-                            //Vakje naar voren
+                            //Voeg de zet toe aan de mogelijke zetten (Pion 1 vakje naar voren).
                             add_move(move_list, encode_move(source_square, target_square, piece, 0, 0, 0, 0, 0));
 
-                            //Als op tweede rij, dan kan ook 2 vakjes.
+                            //Voeg de zet toe aan de mogelijke zetten (Pion 2 vakjes naar voren).
                             if ((source_square >= a2 && source_square <= h2) && !get_bit(occupancies[both], target_square - 8))
+                                //Voeg de zet toe aan de mogelijke zetten.
                                 add_move(move_list, encode_move(source_square, target_square - 8, piece, 0, 0, 1, 0, 0));
                         }
                     }
@@ -1287,7 +1288,7 @@ static inline void generate_moves(moves* move_list)
                         //Als pion op laatste rij, dan promotie.
                         if (source_square >= a7 && source_square <= h7)
                         {
-                            //Promotie met stuk slaan.
+                            //Voeg de zet toe aan de mogelijke zetten (Aanval+promotie).
                             add_move(move_list, encode_move(source_square, target_square, piece, Q, 1, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, R, 1, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, B, 1, 0, 0, 0));
@@ -1296,7 +1297,7 @@ static inline void generate_moves(moves* move_list)
                         //Als pion niet op laatste rij.
                         else
                         {
-                            //Slaan van een stuk.
+                            //Voeg ze zet toe aan de mogelijke zetten (Aanvallen stuk).
                             add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
                         }
                         //Haal de pion weg zodat de zetten voor volgende pion kunnen worden berekend.
@@ -1311,8 +1312,9 @@ static inline void generate_moves(moves* move_list)
                         //Als enpassant attack kan.
                         if (enpassant_attacks)
                         {
-                            //Enpassant slaan en zet.
+                            //Enpassant slaan.
                             int target_enpassant = get_ls1b_index(enpassant_attacks);
+                            //Voeg de zet toe aan de mogelijke zetten (Enpassant slaan).
                             add_move(move_list, encode_move(source_square, target_enpassant, piece, 0, 1, 0, 1, 0));
                         }
                     }
@@ -1321,24 +1323,33 @@ static inline void generate_moves(moves* move_list)
                 }
             }
 
+            //Castling voor wit.
             if (piece == K)
             {
+                //Kingside castling.
                 if (castle & wk)
                 {
+                    //De vakjes ertussen zijn niet bezet door een stuk.
                     if (!get_bit(occupancies[both], f1) && !get_bit(occupancies[both], g1))
                     {
+                        //De vakjes ertussen worden niet aangevallen door zwart.
                         if (!is_square_attacked(e1, black) && !is_square_attacked(f1, black))
                         {
+                            //Voeg de zet toe aan de mogelijke zetten (Kingside castling).
                             add_move(move_list, encode_move(e1, g1, piece, 0, 0, 0, 0, 1));
                         }
                     }
                 }
+                //Queenside castling.
                 if (castle & wq)
                 {
+                    //De vakjes ertussen zijn niet bezet door een stuk.
                     if (!get_bit(occupancies[both], b1) && !get_bit(occupancies[both], c1) && !get_bit(occupancies[both], d1))
                     {
+                        //De vakjes ertussen worden niet aangevallen door zwart.
                         if (!is_square_attacked(d1, black) && !is_square_attacked(e1, black))
                         {
+                            //Voeg de zet toe aan de mogelijke zetten (Queenside castling).
                             add_move(move_list, encode_move(e1, c1, piece, 0, 0, 0, 0, 1));
                         }
                     }
@@ -1366,7 +1377,7 @@ static inline void generate_moves(moves* move_list)
                         //Als het vakje op de laatste rij staat, dan promotie.
                         if (source_square >= a2 && source_square <= h2)
                         {
-                            //Promotie.
+                            //Voeg de zet toe aan de mogelijke zetten (Promotie).
                             add_move(move_list, encode_move(source_square, target_square, piece, q, 0, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, r, 0, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, b, 0, 0, 0, 0));
@@ -1375,11 +1386,12 @@ static inline void generate_moves(moves* move_list)
                         //Als pion niet op 1na laatste rij staat
                         else
                         {
-                            //1 vakje naar voren.
+                            //Voeg de zet toe aan de mogelijke zetten (Pion 1 vakje naar voren).
                             add_move(move_list, encode_move(source_square, target_square, piece, 0, 0, 0, 0, 0));
 
                             //Als op 2e rij, kan ook 2 vakjes naar voren.
                             if ((source_square >= a7 && source_square <= h7) && !get_bit(occupancies[both], target_square + 8))
+                                //Voeg de zet toe aan de mogelijke zetten (Pion 2 vakjes naar voren).
                                 add_move(move_list, encode_move(source_square, target_square + 8, piece, 0, 0, 1, 0, 0));
                         }
                     }
@@ -1396,7 +1408,7 @@ static inline void generate_moves(moves* move_list)
                         //Als pion op laatste rij, dan promotie.
                         if (source_square >= a2 && source_square <= h2)
                         {
-                            //Promotie met stuk slaan.
+                            //Voeg de zet toe aan de mogelijke zetten (Aanvallen+promotie)
                             add_move(move_list, encode_move(source_square, target_square, piece, q, 1, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, r, 1, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, b, 1, 0, 0, 0));
@@ -1405,7 +1417,7 @@ static inline void generate_moves(moves* move_list)
                         //Als pion niet op laatste rij.
                         else
                         {
-                            //Slaan stuk.
+                            //Voeg de zet toe aan de mogelijke zetten (Slaan)
                             add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
                         }
                         
@@ -1421,8 +1433,9 @@ static inline void generate_moves(moves* move_list)
                         //Als enpassant attacks kan.
                         if (enpassant_attacks)
                         {
-                            //Enpassant slaan en zetten.
+                            //Enpassant slaan.
                             int target_enpassant = get_ls1b_index(enpassant_attacks);
+                            //Voeg de zet toe aan de mogelijke zetten (Enpassant slaan).
                             add_move(move_list, encode_move(source_square, target_enpassant, piece, 0, 1, 0, 1, 0));
                         }
                     }
@@ -1431,24 +1444,33 @@ static inline void generate_moves(moves* move_list)
                 }
             }
 
+            //Castling voor zwart.
             if (piece == k)
             {
+                //Kingside castling.
                 if (castle & bk)
                 {
+                    //De vakjes ertussen zijn niet bezet door een stuk.
                     if (!get_bit(occupancies[both], f8) && !get_bit(occupancies[both], g8))
                     {
+                        //De vakjes ertussen worden niet aangevallen door zwart.
                         if (!is_square_attacked(e8, white) && !is_square_attacked(f8, white))
                         {
+                            //Voeg de zet toe aan de mogelijke zetten.
                             add_move(move_list, encode_move(e8, g8, piece, 0, 0, 0, 0, 1));
                         }
                     }
                 }
+                //Queenside castling.
                 if (castle & bq)
                 {
+                    //De vakjes ertussen zijn niet bezet door een stuk.
                     if (!get_bit(occupancies[both], b8) && !get_bit(occupancies[both], c8) && !get_bit(occupancies[both], d8))
                     {
+                        //De vakjes ertussen worde nniet aangevallen door zwart.
                         if (!is_square_attacked(d8, white) && !is_square_attacked(e8, white))
                         {
+                            //Voeg de zet toe aan de mogelijke zetten.
                             add_move(move_list, encode_move(e8, c8, piece, 0, 0, 0, 0, 1));
                         }
                     }
@@ -1456,103 +1478,158 @@ static inline void generate_moves(moves* move_list)
             }
         }
 
+        //Bepaald of het een wit of zwart paard is.
         if ((side == white) ? piece == N : piece == n)
         {
+            //Zolang er een paard op het paard bitboard (kopie) is.
             while (bitboard)
             {
+                //Bepaal waar de eerste knight staat van linksboven naar rechtsboven.
                 source_square = get_ls1b_index(bitboard);
+                //Attacks van knight is waar een knight naartoe kan bewegen, hierbij wordt rekening gehouden met zetten waarbij de knight op een stuk van zijn eigen kleur komt.
                 attacks = knight_attacks[source_square] & ~occupancies[side];
 
+                //Zolang er attack bits (of target_squares) zijn.
                 while (attacks)
                 {
+                    //Krijg de eerste target square.
                     target_square = get_ls1b_index(attacks);
+                    //Als aangevallen bit bezet is door tegenstanders kleur, dan de if, anders de else.
                     if (!get_bit(((side == white) ? occupancies[black] : occupancies[white]), target_square))
                     {
+                        //Voeg de zet toe aan de mogelijke zetten.
                         add_move(move_list, encode_move(source_square, target_square, piece, 0, 0, 0, 0, 0));
                     }
+                    //Voeg de zet toe aan de mogelijke zetten.
                     else add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
+                    //Verwijderd de attack zodat die naar de volgende attack gaat.
                     pop_bit(attacks, target_square);
                 }
+                //Verwijder bit van knight zodat die naar volgende knight gaat.
                 pop_bit(bitboard, source_square);
             }
         }
+        //Bepaald of het een witte of zwarte loper is.
         if ((side == white) ? piece == B : piece == b)
         {
+            //Zolang er een loper op het loper bitboard (kopie) is.
             while (bitboard)
             {
+                //Bepaal waar de eerste loper staat van linksboven naar rechtsonder.
                 source_square = get_ls1b_index(bitboard);
+                //Attacks van loper is waar een loper naartoe kan bewegen, hierbij wordt rekening gehouden met zetten waarbij de loper op een stuk van zijn eigen kleur komt.
                 attacks = get_bishop_attacks(source_square, occupancies[both]) & ~occupancies[side];
 
+                //Zolang er attacks bits (of target_squares) zijn.
                 while (attacks)
                 {
+                    //Krijg de eerste target square.
                     target_square = get_ls1b_index(attacks);
+                    //Als aangevallen bit bezet is door tegenstanders kleur, dan de if, anders de else.
                     if (!get_bit(((side == white) ? occupancies[black] : occupancies[white]), target_square))
                     {
+                        //Voeg de zet toe aan de mogelijke zetten.
                         add_move(move_list, encode_move(source_square, target_square, piece, 0, 0, 0, 0, 0));
                     }
+                    //Voeg de zet toe aan de mogelijke zetten.
                     else add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
+                    //Verwijderd de attack zodat die naar de volgende attack gaat.
                     pop_bit(attacks, target_square);
                 }
+                //Verwijder bit van loper bitboard zodat die naar volgende loper gaat.
                 pop_bit(bitboard, source_square);
             }
         }
+        //Bepaald of het een witte of zwarte toren is.
         if ((side == white) ? piece == R : piece == r)
         {
+            //Zolang er een toren op het toren bitboard (kopie) is.
             while (bitboard)
             {
+                //Bepaal waar de eerste toren staat van linksboven naar rechtsonder.
                 source_square = get_ls1b_index(bitboard);
+                //Attacks van loper is waar een loper naartoe kan bewegen, hierbij wordt rekening gehouden met zetten waarbij de loper op een stuk van zijn eigen kleur komt.
                 attacks = get_rook_attacks(source_square, occupancies[both]) & ~occupancies[side];
 
+                //Zolang er attacks bits (of target_squares) zijn.
                 while (attacks)
                 {
+                    //Krijg de eerste target square.
                     target_square = get_ls1b_index(attacks);
+                    //Als aangevallen bit bezet is door tegenstanders kleur, dan de if, anders de else.
                     if (!get_bit(((side == white) ? occupancies[black] : occupancies[white]), target_square))
                     {
+                        //Voeg de zet toe aan de mogelijke zetten.
                         add_move(move_list, encode_move(source_square, target_square, piece, 0, 0, 0, 0, 0));
                     }
+                    //Voeg de zet toe aan de mogelijke zetten.
                     else add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
+                    //Verwijder de attack zodat die naar de volgende attack gaat.
                     pop_bit(attacks, target_square);
                 }
+                //Verwijder bit van loper bitboard zodat die naar volgende loper gaat.
                 pop_bit(bitboard, source_square);
             }
         }
+        //Bepaal of het een witte of zwarte koningin is.
         if ((side == white) ? piece == Q : piece == q)
         {
+            //Zolagn er een koningin op het koningin bitboard (kopie) is.
             while (bitboard)
             {
+                //Bepaal waar de eerste toren staat van linksboven naar rechtsonder.
                 source_square = get_ls1b_index(bitboard);
+                //Attacks van loper is waar een loper naartoe kan bewegen, hierbij wordt rekening gehoduen met zetten waarbij de loper op een stuk van zijn eigen kleur komt.
                 attacks = get_queen_attacks(source_square, occupancies[both]) & ~occupancies[side];
 
+                //Zolang er attacks bits (of target_squares) zijn.
                 while (attacks)
                 {
+                    //Krijg de eerste target square.
                     target_square = get_ls1b_index(attacks);
+                    //Als aangevallen bit bezet is door tegenstanders kleur, dan de if, anders de else.
                     if (!get_bit(((side == white) ? occupancies[black] : occupancies[white]), target_square))
                     {
+                        //Voeg de zet toe aan de mogelijke zetten.
                         add_move(move_list, encode_move(source_square, target_square, piece, 0, 0, 0, 0, 0));
                     }
+                    //Voeg de zet toe aan de mogelijke zetten.
                     else add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
+                    //Verwijder de attack zodat die naar de volgende attack gaat.
                     pop_bit(attacks, target_square);
                 }
+                //Verwijder bit van koningin zodat die naar de volgende koningin gaat.
                 pop_bit(bitboard, source_square);
             }
         }
+        //Bepaal of het een witte of zwarte koning is.
         if ((side == white) ? piece == K : piece == k)
         {
+            //Zolang er een koning op het koning bitboard (kopie) is.
             while (bitboard)
             {
+                //Bepaal waar de eerste toren staat van linksboven naar rechtsonder.
                 source_square = get_ls1b_index(bitboard);
+                //Attacks van koning is waar een koning naartoe kan bewegen, hierbij wordt rekening gehoduen met zetten waarbij de koning op een stuk van zijn eigen kleur komt.
                 attacks = king_attacks[source_square] & ~occupancies[side];
 
+                //Zolang er attacks bits (of target_squares) zijn.
                 while (attacks)
                 {
+                    //Krijg de eerste target square.
                     target_square = get_ls1b_index(attacks);
+                    //Als aangevallen bit bezet is door tegenstanders kleur, dan de if, anders de else.
                     if (!get_bit(((side == white) ? occupancies[black] : occupancies[white]), target_square))
                     {
+                        //Voeg de zet toe aan de mogelijke zetten.
                         add_move(move_list, encode_move(source_square, target_square, piece, 0, 0, 0, 0, 0));
                     }
+                    //Voeg de zet toe aan de mogelijke zetten.
                     else add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
+                    //Verwijder de atttack zodat die naar de volgende attack gaat.
                     pop_bit(attacks, target_square);
                 }
+                //Verwijder bit van koning zodat die naar de volgende koning gaat.
                 pop_bit(bitboard, source_square);
             }
         }
