@@ -1220,68 +1220,91 @@ static inline void generate_moves(moves* move_list)
     // definieer hoe het bitboard van het huidige stuk eruitziet & z'n aanvallen en maak er een kopie die wordt geloopt (meer info: vid 23 12:00=18:00) 
     U64 bitboard, attacks;
 
-    // loop over alle bitboards
+    //Loop over alle stukken
     for (int piece = P; piece <= k; piece++)
     {
-        //init stuk bitboard kopie
+        //Init stuk bitboard kopie.
         bitboard = bitboards[piece];
-        //generate witte pionnen moves en witte koning rokeer moves (vid 23+)
+        //Generate witte pionnen moves en witte koning rokeer moves (vid 23+)
         if (side == white)
         {
+            //Als stuk is pion.
             if (piece == P)
             {
+                //Loop over witte pawns op het bitboard.
                 while (bitboard)
                 {
+                    //Waar een pion staat.
                     source_square = get_ls1b_index(bitboard);
+                    //Waar een pion naartoe kan.
                     target_square = source_square - 8;
 
+                    //Als het vakje niet op het bord staat en er geen ander stuk staat.
                     if (!(target_square < a8) && !get_bit(occupancies[both], target_square))
                     {
-                        if (source_square >= a7 && source_square <= h7) // If promotion
+                        //Als het vakje op de laatste rij is, dan promotie.
+                        if (source_square >= a7 && source_square <= h7)
                         {
+                            //Promoties.
                             add_move(move_list, encode_move(source_square, target_square, piece, Q, 0, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, R, 0, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, B, 0, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, N, 0, 0, 0, 0));
                         }
 
+                        //Als vakje niet op laatste rij.
                         else
                         {
+                            //Vakje naar voren
                             add_move(move_list, encode_move(source_square, target_square, piece, 0, 0, 0, 0, 0));
 
+                            //Als op tweede rij, dan kan ook 2 vakjes.
                             if ((source_square >= a2 && source_square <= h2) && !get_bit(occupancies[both], target_square - 8))
                                 add_move(move_list, encode_move(source_square, target_square - 8, piece, 0, 0, 1, 0, 0));
                         }
                     }
+                    //Attacks = pawn attacks van wit EN occupancies van black.
                     attacks = pawn_attacks[side][source_square] & occupancies[black];
 
+                    //Als de pion iets aanvalt
                     while (attacks)
-                    {
+                        
+                        //Waar een pion naartoe kan.
                         target_square = get_ls1b_index(attacks);
 
-                        if (source_square >= a7 && source_square <= h7) // If promotion
+                        //Als pion op laatste rij, dan promotie.
+                        if (source_square >= a7 && source_square <= h7)
                         {
+                            //Promotie met stuk slaan.
                             add_move(move_list, encode_move(source_square, target_square, piece, Q, 1, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, R, 1, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, B, 1, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, N, 1, 0, 0, 0));
                         }
+                        //Als pion niet op laatste rij.
                         else
                         {
+                            //Slaan van een stuk.
                             add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
                         }
+                        //Haal de pion weg zodat de zetten voor volgende pion kunnen worden berekend.
                         pop_bit(attacks, target_square);
                     }
 
+                    //Als enpassant = een vakje.
                     if (enpassant != no_sq)
                     {
+                        //enpassant attacks = pawn attacks EN enpassant vakje.
                         U64 enpassant_attacks = pawn_attacks[side][source_square] & (1ULL << enpassant);
+                        //Als enpassant attack kan.
                         if (enpassant_attacks)
                         {
+                            //Enpassant slaan en zet.
                             int target_enpassant = get_ls1b_index(enpassant_attacks);
                             add_move(move_list, encode_move(source_square, target_enpassant, piece, 0, 1, 0, 1, 0));
                         }
                     }
+                    //Haal de least significant bit weg.
                     pop_bit(bitboard, source_square);
                 }
             }
@@ -1310,63 +1333,88 @@ static inline void generate_moves(moves* move_list)
                 }
             }
         }
-        //generate zwarte pion bewegingen en zwarte koning rokeer moves 
+         
+        //Generate zwarte pion bewegingen en zwarte koning rokeer moves.
         else
         {
+            //Als stuk is pion.
             if (piece == p)
             {
+                //Loop alle stukken op het bitboard.
                 while (bitboard)
                 {
+                    //Waar een pion staat.
                     source_square = get_ls1b_index(bitboard);
+                    //Waar een pion naartoe kan.
                     target_square = source_square + 8;
 
+                    //Als het vakje niet op het bord staat en er geen ander stuk staat.
                     if (!(target_square > h1) && !get_bit(occupancies[both], target_square))
                     {
-                        if (source_square >= a2 && source_square <= h2) // If promotion
+                        //Als het vakje op de laatste rij staat, dan promotie.
+                        if (source_square >= a2 && source_square <= h2)
                         {
+                            //Promotie.
                             add_move(move_list, encode_move(source_square, target_square, piece, q, 0, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, r, 0, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, b, 0, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, n, 0, 0, 0, 0));
                         }
+                        //Als pion niet op 1na laatste rij staat
                         else
                         {
+                            //1 vakje naar voren.
                             add_move(move_list, encode_move(source_square, target_square, piece, 0, 0, 0, 0, 0));
 
+                            //Als op 2e rij, kan ook 2 vakjes naar voren.
                             if ((source_square >= a7 && source_square <= h7) && !get_bit(occupancies[both], target_square + 8))
                                 add_move(move_list, encode_move(source_square, target_square + 8, piece, 0, 0, 1, 0, 0));
                         }
                     }
+                    
+                    //Attacks = pawn attacks van zwart EN occupancies van wit.
                     attacks = pawn_attacks[side][source_square] & occupancies[white];
-
+                    
+                    //Als de pion iets aanvalt
                     while (attacks)
                     {
+                        //Target square = eerste vakje dat aangevallen wordt vanaf linksboven. 
                         target_square = get_ls1b_index(attacks);
 
-                        if (source_square >= a2 && source_square <= h2) // If promotion
+                        //Als pion op laatste rij, dan promotie.
+                        if (source_square >= a2 && source_square <= h2)
                         {
+                            //Promotie met stuk slaan.
                             add_move(move_list, encode_move(source_square, target_square, piece, q, 1, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, r, 1, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, b, 1, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, n, 1, 0, 0, 0));
                         }
+                        //Als pion niet op laatste rij.
                         else
                         {
+                            //Slaan stuk.
                             add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
                         }
-
+                        
+                        //Haal de pion weg zodat de zetten voor volgende pion kunnen worden berekend.
                         pop_bit(attacks, target_square);
                     }
-
+                    
+                    //Als enpassant = een vakje.
                     if (enpassant != no_sq)
                     {
+                        //enpassant attacks = pawn attacks EN enpassant vakje.
                         U64 enpassant_attacks = pawn_attacks[side][source_square] & (1ULL << enpassant);
+                        //Als enpassant attacks kan.
                         if (enpassant_attacks)
                         {
+                            //Enpassant slaan en zetten.
                             int target_enpassant = get_ls1b_index(enpassant_attacks);
                             add_move(move_list, encode_move(source_square, target_enpassant, piece, 0, 1, 0, 1, 0));
                         }
                     }
+                    //Haal de least significant bit weg.
                     pop_bit(bitboard, source_square);
                 }
             }
