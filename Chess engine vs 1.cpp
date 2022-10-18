@@ -930,8 +930,10 @@ static inline U64 get_rook_attacks(int square, U64 occupancy)
     return rook_attacks[square][occupancy];
 }
 
+//Koningin attacks krijgen. Dit zijn nu echt de bits die de toren aanvalt.
 static inline U64 get_queen_attacks(int square, U64 occupancy)
 {
+    //Krijg toren en bishop attacks want koningin kan wat een toren en bishop kan.
     return (get_bishop_attacks(square, occupancy) | get_rook_attacks(square, occupancy));
 }
 
@@ -1059,30 +1061,31 @@ static inline int is_square_attacked(int square, int side)
     //Als niks het aanvalt
     return 0;
 }
-// Het printen van de aangevallen vakjes
+//Het printen van de aangevallen vakjes.
 void print_attacked_squares(int side)
 {
+    //Nieuwe regel.
     std::printf("\n");
-    //Loop over de rijen
+    //Loop over de rijen.
     for (int rank = 0; rank < 8; rank++)
     {
-        //loop over bort kollommen
+        //Loop over bord kollommen.
         for (int file = 0; file < 8; file++)
         {
-            //convert f&r --> square
+            //Convert f&r --> square.
             int square = rank * 8 + file;
-           //print files (als file =/ 0, dan -->
+            //Print files (als file =/ 0, dan -->
             if (!file)
             {
                 std::printf("  %d  ", 8 - rank);
             }
-            // checken of het vakje wordt aangevallen
+            //Checken of het vakje wordt aangevallen.
             std::printf("%d ", is_square_attacked(square, side) ? 1 : 0);
         }
-        //nieuwe lijn elke rij
+        //Nieuwe lijn elke rij.
         std::printf("\n");
     }
-   // print rijen
+   //Print rijen.
     std::printf("\n     a b c d e f g h\n\n");
 }
 
