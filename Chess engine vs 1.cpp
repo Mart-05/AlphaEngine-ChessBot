@@ -943,8 +943,26 @@ static inline U64 get_queen_attacks(int square, U64 occupancy)
 Encoding moves
 
 ***************/
+
+/* Dit zijn het aantal bits dat nodig is per zet of slaan en ook in hexidecimal. Er zijn bv 64 source squares. 6 bits zorgen daarvoor (2^6=64),
+verder ook 64 target squares. 12 verschillende stukken wit en zwart samen, hiervoor zijn 4 bits nodig, 2^4 = 16 maar 2^3 is te weinig. etc.
+
+          binary move bits                               hexidecimal constants
+    
+    0000 0000 0000 0000 0011 1111    source square       0x3f
+    0000 0000 0000 1111 1100 0000    target square       0xfc0
+    0000 0000 1111 0000 0000 0000    piece               0xf000
+    0000 1111 0000 0000 0000 0000    promoted piece      0xf0000
+    0001 0000 0000 0000 0000 0000    capture flag        0x100000
+    0010 0000 0000 0000 0000 0000    double push flag    0x200000
+    0100 0000 0000 0000 0000 0000    enpassant flag      0x400000
+    1000 0000 0000 0000 0000 0000    castling flag       0x800000
+*/
+
+//Encode move. Backslash omdat meerdere lines code bij elkaar horen??
 #define encode_move(source, target, piece, promoted, capture, doublep, enpassant, castling) \
     (source) |          \
+    //6 naar links want normaal begint het rechts en de 1tjes staan 6 naar links voor target zoals hierboven te zien. Voor de rest ook zo. Vid 27 extra uitleg.
     (target << 6) |     \
     (piece << 12) |     \
     (promoted << 16) |  \
@@ -953,6 +971,8 @@ Encoding moves
     (enpassant << 22) | \
     (castling << 23)    \
 
+//Define shortcuts voor later, de move & hexidecimal staat voor de 1en aan het begin van dit hoofdstuk "encoding moves". Vid 27 extra uitleg.
+//"&" is een bitwise operation voor alleen 1 als beide 1 zijn. Hierdoor krijg je alleen de source bij source en niet andere informatie erbij.
 #define get_move_source(move) (move & 0x3f)
 #define get_move_target(move) ((move & 0xfc0) >> 6)
 #define get_move_piece(move) ((move & 0xf000) >> 12)
@@ -961,7 +981,7 @@ Encoding moves
 #define get_move_double(move) (move & 0x200000)
 #define get_move_enpassant(move) (move & 0x400000)
 #define get_move_castling(move) (move & 0x800000)
-
+    
 //movelist structure
 typedef struct {
     //moves
