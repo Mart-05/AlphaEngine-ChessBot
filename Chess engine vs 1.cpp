@@ -991,16 +991,16 @@ typedef struct {
 
 } moves;
 
-// toevoegen van moves aan de movelist
+//Toevoegen van moves aan de movelist.
 static inline void add_move(moves* move_list, int move)
 {
-    //Store moves
+    //Store moves.
     move_list->moves[move_list->count] = move;
-    //Vergroot move count
+    //Vergroot move count.
     move_list->count++;
 }
 
-// Promoted pieces
+//Promoted pieces, voor wit en zwart beide kleine letters.
 std::map<int, char> promoted_pieces = {
     {Q, 'q'},
     {R, 'r'},
@@ -1012,7 +1012,7 @@ std::map<int, char> promoted_pieces = {
     {n, 'n'}
 };
 
-// Print move (UCI purposes)
+//Print move (UCI purposes).
 void print_move(int move)
 {
     if (get_move_promoted(move))
@@ -1025,11 +1025,13 @@ void print_move(int move)
             square_to_coordinates[get_move_source(move)],
             square_to_coordinates[get_move_target(move)]);
 }
-// Print move list (voor debuggen)
+//Print move list (voor debuggen).
 void print_move_list(moves* move_list)
 {
+    //Do niks bij een lege move list.
     if (!move_list->count)
     {
+        //Print geen zetten gevonden.
         std::printf("\n  No moves found!\n\n");
         return;
     }
@@ -1245,6 +1247,7 @@ static inline int make_move(int move, int move_flag)
 // generate all moves
 static inline void generate_moves(moves* move_list)
 {
+    //Init move count.
     move_list->count = 0;
     //definieer waar het stuk staat en waar het naartoe gaat
     int source_square, target_square;
