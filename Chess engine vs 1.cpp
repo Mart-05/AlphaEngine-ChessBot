@@ -1824,6 +1824,7 @@ int pv_table[MAX_PLY][MAX_PLY];
 
 int follow_pv, score_pv;
 
+//Leaf nodes, aantal posities die behaald zijn tijdens een test met de move generator bij een bepaalde depth.
 long nodes;
 
 int ply;
@@ -2236,7 +2237,7 @@ void init_all()
     init_sliders_attacks(bishop);
     init_sliders_attacks(rook);
 }
-
+//De tijd meten (anders in vid 41 dan hier).
 auto get_time_ms()
 {
     auto ms_since_epoch = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -2245,33 +2246,44 @@ auto get_time_ms()
     return ms_since_epoch;
 }
 
+//Perft driver.
 static inline void perft_driver(int depth)
 {
+    //Als de depth 0 is.
     if (depth == 0)
     {
+        //Tel 1 bij nodes op.
         nodes++;
         return;
     }
 
+    //Generate move list
     moves move_list[1];
+    //Generate zetten in de move list.
     generate_moves(move_list);
 
+    //Loop over alle gegenereerde zetten in move_list.
     for (int move_count = 0; move_count < move_list->count; move_count++)
     {
+        //Onthoud eerdere bordstatus.
         copy_board();
 
+        //Maak zet???
         if (!make_move(move_list->moves[move_count], all_moves)) continue;
+        //Depth 1 naar beneden want net zet gedaan en zometeen zet terug dus depth blijft hetzelfde.
         perft_driver(depth - 1);
 
+        //Take back.
         take_back();
     }
 }
-
+//Perft is de info zoals aantal mogelijke zetten, captures etc.
 void perft(int depth)
 {
     std::printf("\n     Performance test\n\n");
     moves move_list[1];
     generate_moves(move_list);
+    //Start tracking tijd.
     auto start_time = get_time_ms();
     for (int move_count = 0; move_count < move_list->count; move_count++)
     {
@@ -2288,6 +2300,7 @@ void perft(int depth)
     }
     std::printf("\n\n    Depth:   %d\n", depth);
     std::printf("    Nodes:   %ld\n", nodes);
+    //Tijd sinds laatste zet in ms.
     std::printf("    Time:    %ld\n", get_time_ms() - start_time);
 }
 
