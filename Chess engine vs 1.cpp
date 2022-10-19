@@ -1015,11 +1015,13 @@ std::map<int, char> promoted_pieces = {
 //Print move (UCI purposes).
 void print_move(int move)
 {
+    //Als promoted, print met promotion.
     if (get_move_promoted(move))
         std::printf("%s%s%c",
             square_to_coordinates[get_move_source(move)],
             square_to_coordinates[get_move_target(move)],
             promoted_pieces[get_move_promoted(move)]);
+    //Anders, print zonder promotion.
     else
         std::printf("%s%s",
             square_to_coordinates[get_move_source(move)],
@@ -2277,30 +2279,42 @@ static inline void perft_driver(int depth)
         take_back();
     }
 }
-//Perft is de info zoals aantal mogelijke zetten, captures etc.
+//Perft test (performance test zoals aantal nodes per depth).
 void perft(int depth)
 {
+    //Print "performance test".
     std::printf("\n     Performance test\n\n");
+    //Generate move list.
     moves move_list[1];
+    //Generate zetten in de move list.
     generate_moves(move_list);
     //Start tracking tijd.
     auto start_time = get_time_ms();
+    //Loop over alle gegenereerde zetten in  move_list.
     for (int move_count = 0; move_count < move_list->count; move_count++)
     {
+        //Onthoud eerdere bordstatus.
         copy_board();
+        //Maak zet???
         if (!make_move(move_list->moves[move_count], all_moves)) continue;
+        //Alle nodes samen.
         long all_nodes = nodes;
         perft_driver(depth - 1);
+        //Old nodes, de nodes per zet in depth 1.
         long old_nodes = nodes - all_nodes;
+        //Take back.
         take_back();
+        //Print zet met aantal nodes erachter.
         std::printf("     move: %s%s%c  nodes: %ld\n", square_to_coordinates[get_move_source(move_list->moves[move_count])],
             square_to_coordinates[get_move_target(move_list->moves[move_count])],
             get_move_promoted(move_list->moves[move_count]) ? promoted_pieces[get_move_promoted(move_list->moves[move_count])] : ' ',
             old_nodes);
     }
+    //Print depth.
     std::printf("\n\n    Depth:   %d\n", depth);
+    //Print aantal nodes.
     std::printf("    Nodes:   %ld\n", nodes);
-    //Tijd sinds laatste zet in ms.
+    //Print tijd sinds laatste zet in ms.
     std::printf("    Time:    %ld\n", get_time_ms() - start_time);
 }
 
