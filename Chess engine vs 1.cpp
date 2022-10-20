@@ -1125,9 +1125,10 @@ void print_attacked_squares(int side)
     std::printf("\n     a b c d e f g h\n\n");
 }
 
-// 
+//Soorten zetten.
 enum { all_moves, only_captures };
 
+//Castling rights.
 const int castling_rights[64] = {
      7, 15, 15, 15,  3, 15, 15, 11,
     15, 15, 15, 15, 15, 15, 15, 15,
@@ -1139,12 +1140,16 @@ const int castling_rights[64] = {
     13, 15, 15, 15, 12, 15, 15, 14
 };
 
+//
 static inline int make_move(int move, int move_flag)
 {
+    //Zet zonder slaan.
     if (move_flag == all_moves)
     {
+        //Kopieer bord.
         copy_board();
 
+        //Alles dat bij een zet komt kijken.
         int source_square = get_move_source(move);
         int target_square = get_move_target(move);
         int piece = get_move_piece(move);
@@ -1154,95 +1159,139 @@ static inline int make_move(int move, int move_flag)
         int enpass = get_move_enpassant(move);
         int castling = get_move_castling(move);
 
+        //Maak een bit een 0.
         pop_bit(bitboards[piece], source_square);
+        //Maak een bit een 1.
         set_bit(bitboards[piece], target_square);
 
+        //Als iets geslagen wordt.
         if (capture)
         {
+            //Variables.
             int start_piece, end_piece;
+            //Als wit aan zet.
             if (side == white)
             {
+                //Loop zwarte stukken
                 start_piece = p;
                 end_piece = k;
             }
+            //Als zwart aan zet.
             else
             {
+                //Loop witte stukken
                 start_piece = P;
                 end_piece = K;
             }
+            //Loop stukken op bord.
             for (int bb_piece = start_piece; bb_piece <= end_piece; bb_piece++)
             {
+                //Als een stuk op het aangevallen vakje staat moet die worden verwijderd (wordt geslagen).
                 if (get_bit(bitboards[bb_piece], target_square))
                 {
+                    //Verwijder bit (slaan).
                     pop_bit(bitboards[bb_piece], target_square);
                     break;
                 }
             }
         }
+        //Als promotie.
         if (promoted)
         {
+            //Verwijder pion als wit dan P, als zwart dan p.
             pop_bit(bitboards[(side == white) ? P : p], target_square);
+            //Zet een nieuw stuk neer (meestal koningin, het promoted piece).
             set_bit(bitboards[promoted], target_square);
         }
+        //Als enpassant.
         if (enpass)
         {
             (side == white) ?
+                //Als wit, popbit +8.
                 pop_bit(bitboards[p], target_square + 8) :
+                //Als zwart, popbit -8.
                 pop_bit(bitboards[P], target_square - 8);
         }
 
+        //Zet enpassant naar niks want na een double pawn push wordt het een vakje en een zet verder kan dat niet meer.
         enpassant = no_sq;
 
+        //Double pawn push.
         if (double_push)
         {
             (side == white) ?
+                //Als wit aan zet is, dan enpassant vakje +8.
                 enpassant = target_square + 8 :
+                //Als zwart aan zet is, dan enpassant vakje -8.
                 enpassant = target_square - 8;
         }
+        //Castling
         if (castling)
         {
+            //Target_square
             switch (target_square)
             {
+            //Als target_square = g1.
             case (g1):
+                //Verwijder toren op h1 en zet op f1
                 pop_bit(bitboards[R], h1);
                 set_bit(bitboards[R], f1);
                 break;
+            //Als target_square = c1.            
             case (c1):
+                //Verwijder toren op a1 en zet op d1
                 pop_bit(bitboards[R], a1);
                 set_bit(bitboards[R], d1);
                 break;
+            //Als target_square = g8.
             case (g8):
+                //Verwijder toren op h8 en zet op f8
                 pop_bit(bitboards[r], h8);
                 set_bit(bitboards[r], f8);
                 break;
+            //Als target_square = c8.
             case (c8):
+                //Verwijder toren op a8 en zet op d8
                 pop_bit(bitboards[r], a8);
                 set_bit(bitboards[r], d8);
                 break;
             }
         }
 
+        //Castle mag alleen als toren en koning nog niet hebben bewogen.
         castle &= castling_rights[source_square];
         castle &= castling_rights[target_square];
 
+        //Copy occupancies.
         memset(occupancies, 0ULL, 24);
+        //Loop over witte stukken bitboards en update white occupancies.
         for (int bb_piece = P; bb_piece <= K; bb_piece++) occupancies[white] |= bitboards[bb_piece];
+        //Loop over witte stukken bitboards en update black occupancies.
         for (int bb_piece = p; bb_piece <= k; bb_piece++) occupancies[black] |= bitboards[bb_piece];
+        //Update beide
         occupancies[both] |= occupancies[white];
         occupancies[both] |= occupancies[black];
 
+        //Switch side
         side ^= 1;
 
+        //Als koning wordt aangevallen door andere kleur.
         if (is_square_attacked((side == white) ? get_ls1b_index(bitboards[k]) : get_ls1b_index(bitboards[K]), side))
         {
+            //Take back.
             take_back();
+            //Illegal move.
             return 0;
         }
+        //Legal move
         else return 1;
     }
+    //Als de zet iets aanvalt. 
     else
     {
+        //Zeker weten dat de zet een aanval is.
         if (get_move_capture(move)) make_move(move, all_moves);
+        //Anders niet doen.
         else return 0;
     }
 }
