@@ -2162,101 +2162,159 @@ void search_position(int depth)
 UCI
 
 ***************/
+//Geef de user/GUI move string input (bv e7e8q). (binnen de haakjes is anders in vid 44)
 int parse_move(std::string move_string)
 {
+    //Generate move list.
     moves move_list[1];
+    //Generate moves.
     generate_moves(move_list);
 
+    //Eerste 2 letters/cijfers van move_string (source square).
     int source_square = (move_string[0] - 'a') + (8 - (move_string[1] - '0')) * 8;
+    //Derde en vierde letters/cijfers van move_string (target square).
     int target_square = (move_string[2] - 'a') + (8 - (move_string[3] - '0')) * 8;
 
+    //Loop moves in move list.
     for (int move_count = 0; move_count < move_list->count; move_count++)
     {
+        //Init move.
         int move = move_list->moves[move_count];
+        //Zeker weten dat de source_square en target_square mogelijk zijn.
         if (source_square == get_move_source(move) && target_square == get_move_target(move))
         {
+            //Init promoted piece.
             int promoted_piece = get_move_promoted(move);
+            
+            //Als promotie in 
             if (promoted_piece)
             {
+                //Als 5e cijfer/letter een qrb of n, dan promotie.
                 if (move_string[4] == 'q' || move_string[4] == 'r' || move_string[4] == 'b' || move_string[4] == 'n')
+                    //Return legal move.
                     return move;
+                //Return illegal move.                          
                 return 0;
             }
+            //Return legal move. (in tutorial "return 1" vid 44)
             return move;
         }
     }
+    //Return illegal move.
     return 0;
 }
 
+//Parce uci position commmand.
 void parse_position(const char* command)
 {
+    //Ga 9 tekens verder in de command. (bv "postion startpos" leest die vanaf startpos want dat is belangrijk en daarvoor niet).
     command += 9;
+    //Current_char = command.
     const char* current_char = command;
 
+    //Als de letters na postition startpos zijn dus command "position startpos".
     if (strncmp(command, "startpos", 8) == 0)
+        //Dan fen = start_position.
         parse_fen(start_position);
+    //Anders.
     else
     {
+        
+        //Current_char = fen command is in string.
         current_char = strstr(command, "fen");
 
+        //Als er geen fen is in current_char.
         if (current_char == NULL)
+            //Fen = startposition
             parse_fen(start_position);
+        //Anders (wel een fen).
         else
         {
+            //Ga 4 verder (skip fen en de spatie).
             current_char += 4;
+            //Parse_fen wat over is (de fen).
             parse_fen(current_char);
         }
     }
+    //Parse moves na de fen.
     current_char = strstr(command, "moves");
 
+    //Als er nog zetten zijn.
     if (current_char != NULL)
     {
+        //Ga 6 verder, moves en een spatie.
         current_char += 6;
+        //Loop over tekens in de overige string.
         while (*current_char)
         {
+            //Een legale zet of 0 als illegaal.
             int move = parse_move(current_char);
+            //Als er niet meer zetten zijn.
             if (move == 0)
+                //Stop de loop.
                 break;
 
+            //Doe de zetten.
             make_move(move, all_moves);
+            //Zolang er geen spatie is, naar volgende teken gaan.
             while (*current_char && *current_char != ' ') current_char++;
+            //Ga naar volgende zet.
             current_char++;
         }
     }
 }
 
+//UCI go command.
 void parse_go(const char* command)
 {
+    
+    //Skip de go en spatie.
     command += 3;
+    //Init depth.
     int depth = -1;
+    //Current_depth = command.
     const char* current_depth = command;
 
+    //Als het woord depth er staat.
     if (strncmp(command, "depth", 5) == 0) {
+        //Dan skip de depth en spatie.
         current_depth += 6;
+        //En convert string naar depth en geef het de waarde van current_depth.
         depth = atoi(current_depth);
     }
+    //Anders
     else
+        //Depth = 5
         depth = 5;
 
+    //idk???
     search_position(depth);
 }
 
+//Belangrijkste UCI loop
 void uci_loop()
 {
+    //Reset stdin en stdout buffers.
     setbuf(stdin, NULL);
     setbuf(stdout, NULL);
 
+    //Groot nummer want moet altijd genoeg tekens zijn in de input, kan best veel zijn.
     char input[2000];
 
-    std::printf("id name CPPChess\n");
-    std::printf("id author DevRudolf\n");
+    //Print engine info
+    std::printf("id name AlphaEngine\n");
+    std::printf("id author Mart:)\n");
     std::printf("uciok\n");
 
+    //Main loop (1 staat voor true)
     while (1)
     {
+        //Reset user /gui input.
         memset(input, 0, sizeof(input));
+        //Zorgt ervoor dat de output bij de gui aankomt. 
         fflush(stdout);
 
+        
         if (!fgets(input, 2000, stdin))
             continue;
         else if (input[0] == '\n')
