@@ -1713,7 +1713,7 @@ static inline void generate_moves(moves* move_list)
 
 /**************
 
-SEARCH
+EVALUATION
 
 ***************/
 int material_score[12] = {
@@ -1809,21 +1809,29 @@ const int mirror_score[128] =
     a7, b7, c7, d7, e7, f7, g7, h7,
     a8, b8, c8, d8, e8, f8, g8, h8
 };
-
+//position evaluation
 static inline int evaluate()
 {
+    //static evaluation score
     int score = 0;
+    //current pieces bitboard copy
     U64 bitboard;
+    // init piece & square
     int piece, square;
 
+    // loop over piece bitboards 
     for (int bb_piece = P; bb_piece <= k; bb_piece++)
     {
+        // init bitboard piece copy
         bitboard = bitboards[bb_piece];
+        //loop over pieces within a bitboard
         while (bitboard)
         {
+            //init piece
             piece = bb_piece;
+            //vakje moet gelijk zijn aan de ls1b index van het bitboard
             square = get_ls1b_index(bitboard);
-
+            // score van de stukken is gelijk aan de material score
             score += material_score[piece];
 
             switch (piece)
@@ -1842,10 +1850,11 @@ static inline int evaluate()
                 //case q: score -= queen_score[mirror_score[square]]; break;
             case k: score -= king_score[mirror_score[square]]; break;
             }
-
+            // pop ls1b van kopie
             pop_bit(bitboard, square);
         }
     }
+    // return final evaluation based on side (dus negatief voor zwart, positief voor wit)
     return (side == white) ? score : -score;
 }
 
