@@ -2003,36 +2003,49 @@ static inline int quiescence(int alpha, int beta)
     }
 
     moves move_list[1];
+  
+    //generate moves
     generate_moves(move_list);
 
     sort_moves(move_list);
 
+    //loop over moves within a movelist
     for (int count = 0; count < move_list->count; count++)
     {
+        //preserve board state
         copy_board();
+        //verhoog ply
         ply++;
 
+        //alleen legale moves
         if (make_move(move_list->moves[count], only_captures) == 0)
         {
+            //verlaag ply
             ply--;
             continue;
         }
-
+        //score current move
         int score = -quiescence(-beta, -alpha);
-
+        //verlaag ply
         ply--;
+        //take move back
         take_back();
 
+        //fail hard beta cutoff 
         if (score >= beta)
         {
+           //node (move) fails high
             return beta;
         }
 
+        //found a better move
         if (score > alpha)
         {
+            //PV node (move)
             alpha = score;
         }
     }
+    //node (move) fails low (of hetzelfde dan alpha of lager)
     return alpha;
 }
 
