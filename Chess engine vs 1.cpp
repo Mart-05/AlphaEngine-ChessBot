@@ -1716,6 +1716,7 @@ static inline void generate_moves(moves* move_list)
 EVALUATION
 
 ***************/
+//Materiaal waarde scores.
 int material_score[12] = {
     100,      // white pawn score
     300,      // white knight scrore
@@ -1798,6 +1799,7 @@ const int king_score[64] =
      0,   0,   5,   0, -15,   0,  10,   0
 };
 
+//Vakje van engines kant naar tegenstanders kant en andersom.
 const int mirror_score[128] =
 {
     a1, b1, c1, d1, e1, f1, g1, h1,
@@ -1834,27 +1836,30 @@ static inline int evaluate()
             // score van de stukken is gelijk aan de material score
             score += material_score[piece];
 
+            //Kies stuk.
             switch (piece)
             {
+            //Tel de positional score van wit per stuk erbij op.
             case P: score += pawn_score[square]; break;
             case N: score += knight_score[square]; break;
             case B: score += bishop_score[square]; break;
             case R: score += rook_score[square]; break;
-                //case Q: score += queen_score[square]; break;
+            //case Q: score += queen_score[square]; break;
             case K: score += king_score[square]; break;
 
+            //Trek de positional score van wit per stuk ervanaf.
             case p: score -= pawn_score[mirror_score[square]]; break;
             case n: score -= knight_score[mirror_score[square]]; break;
             case b: score -= bishop_score[mirror_score[square]]; break;
             case r: score -= rook_score[mirror_score[square]]; break;
-                //case q: score -= queen_score[mirror_score[square]]; break;
+            //case q: score -= queen_score[mirror_score[square]]; break;
             case k: score -= king_score[mirror_score[square]]; break;
             }
-            // pop ls1b van kopie
+            //Pop ls1b van kopie.
             pop_bit(bitboard, square);
         }
     }
-    // return final evaluation based on side (dus negatief voor zwart, positief voor wit)
+    //Return final evaluation based on side (dus negatief voor zwart, positief voor wit).
     return (side == white) ? score : -score;
 }
 
@@ -1887,6 +1892,7 @@ int follow_pv, score_pv;
 //Leaf nodes, aantal posities die behaald zijn tijdens een test met de move generator bij een bepaalde depth.
 long nodes;
 
+//Half move dus een zet van een kant.
 int ply;
 
 static inline void enable_pv_scoring(moves* move_list)
@@ -2020,8 +2026,9 @@ static inline int quiescence(int alpha, int beta)
         //alleen legale moves
         if (make_move(move_list->moves[count], only_captures) == 0)
         {
-            //verlaag ply
+            //Ply -1.
             ply--;
+            //Ga naar volgende zet.
             continue;
         }
         //score current move
@@ -2049,28 +2056,35 @@ static inline int quiescence(int alpha, int beta)
     return alpha;
 }
 
+//Negamax alpha-beta search.
 static inline int negamax(int alpha, int beta, int depth)
 {
     int found_pv = 0;
 
     pv_length[ply] = ply;
 
+    //Als de depth 0 is, dan return iets??
     if (depth == 0)
         return quiescence(alpha, beta);
 
     if (ply > MAX_PLY - 1)
         return evaluate();
 
+    //Vergroot nodes.
     nodes++;
 
+    //Variabele in_check.
     int in_check = is_square_attacked((side == white) ? get_ls1b_index(bitboards[K]) :
         get_ls1b_index(bitboards[k]), side ^ 1);
 
     if (in_check) depth++;
 
+    //Legal moves variabele.
     int legal_moves = 0;
 
+    //Creeër move list genaamd moves.
     moves move_list[1];
+    //Genereer zetten.
     generate_moves(move_list);
 
     if (follow_pv)
@@ -2078,18 +2092,25 @@ static inline int negamax(int alpha, int beta, int depth)
 
     sort_moves(move_list);
 
+    //Loop over zetten in move_list.
     for (int count = 0; count < move_list->count; count++)
     {
+        //Maak een kopie van het board.
         copy_board();
+        //Half move++
         ply++;
 
+        //Als zet niet legaal is, dan ply - 1.
         if (make_move(move_list->moves[count], all_moves) == 0)
         {
+            //Ply -1 en ga verder.
             ply--;
             continue;
         }
+        //Legale zetten +1
         legal_moves++;
 
+        //Variabele: score.
         int score;
 
         if (found_pv)
@@ -2099,11 +2120,15 @@ static inline int negamax(int alpha, int beta, int depth)
                 score = -negamax(-beta, -alpha, depth - 1);
         }
         else
+            //Geef de zet een score.
             score = -negamax(-beta, -alpha, depth - 1);
 
+        //Ply -1.
         ply--;
+        //Zet terug nemen.
         take_back();
 
+        //Als de score groter of gelijk is aan beta. (Node fails high).
         if (score >= beta)
         {
             if (get_move_capture(move_list->moves[count]) == 0)
@@ -2111,14 +2136,17 @@ static inline int negamax(int alpha, int beta, int depth)
                 killer_moves[1][ply] = killer_moves[0][ply];
                 killer_moves[0][ply] = move_list->moves[count];
             }
+            //Return beta.
             return beta;
         }
 
+        //Als de score groter is dan alpha (betere zet).
         if (score > alpha)
         {
             if (get_move_capture(move_list->moves[count]) == 0)
                 history_moves[get_move_piece(move_list->moves[count])][get_move_target(move_list->moves[count])] += depth;
 
+            //Stel alpha gelijk aan score.
             alpha = score;
 
             found_pv = 1;
@@ -2130,13 +2158,18 @@ static inline int negamax(int alpha, int beta, int depth)
             pv_length[ply] = pv_length[ply + 1];
         }
     }
+    //Als er geen legale zetten zijn.
     if (legal_moves == 0)
     {
+        //En als de koning in check is.
         if (in_check)
+            //Dan return mate. +ply want mate in 1 gaat voor mate in 10.
             return -49000 + ply;
         else
+            //Anders stalemate.
             return 0;
     }
+    //Return alpha. (Node fails low).
     return alpha;
 }
 
@@ -2154,8 +2187,10 @@ void search_position(int depth)
     for (int current = 1; current <= depth; current++)
     {
         follow_pv = 1;
+        //Zoek de beste zet in de gegeven positie.
         int score = negamax(-50000, 50000, current);
 
+        //Print belangrijke info.
         std::printf("info score cp %d depth %d nodes %ld pv ", score, current, nodes);
         for (int count = 0; count < pv_length[0]; count++)
         {
@@ -2164,6 +2199,7 @@ void search_position(int depth)
         }
         std::printf("\n");
     }
+    //Print best move.
     std::printf("bestmove ");
     print_move(pv_table[0][0]);
     std::printf("\n");
