@@ -1862,7 +1862,7 @@ static inline int evaluate()
     //Return final evaluation based on side (dus negatief voor zwart, positief voor wit).
     return (side == white) ? score : -score;
 }
-
+//Most valuable victim - Least valuable attacker tabel.
 static int mvv_lva[12][12] = {
     105, 205, 305, 405, 505, 605,  105, 205, 305, 405, 505, 605,
     104, 204, 304, 404, 504, 604,  104, 204, 304, 404, 504, 604,
@@ -1908,6 +1908,7 @@ static inline void enable_pv_scoring(moves* move_list)
     }
 }
 
+//Geef elke zet een score kwa goed/slecht.
 static inline int score_move(int move)
 {
     int piece_score = material_score[get_move_piece(move)];
@@ -1920,27 +1921,36 @@ static inline int score_move(int move)
             return 20000;
         }
     }
-
+    
+    //Capture moves.
     if (get_move_capture(move))
     {
+        //Target_piece = witte pion (startwaarde vanwege ennpassant, anders crashed die).
         int target_piece = P;
-
+        //Start_piece en end_piece oproepen.
         int start_piece, end_piece;
 
+        //Als wit, dan loop zwarte stukken, als zwart dan loop witte stukken.
         if (side == white) { start_piece = p; end_piece = k; }
         else { start_piece = P; end_piece = K; }
 
+        //Loop over bitboards van tegenstander.
         for (int bb_piece = start_piece; bb_piece <= end_piece; bb_piece++)
         {
+            //Zoek het stuk van de tegenstander dat op het gegeven vakje staat.
             if (get_bit(bitboards[bb_piece], get_move_target(move)))
             {
+                //Target_piece = aangevallen stuk;
                 target_piece = bb_piece;
                 break;
             }
         }
 
+        //Return score [source piece][target piece]. 10000 staat niet in video 54.
         return mvv_lva[get_move_piece(move)][target_piece] + 10000;
     }
+    
+    //Quiet move.
     else
     {
         if (killer_moves[0][ply] == move)
@@ -1953,23 +1963,34 @@ static inline int score_move(int move)
     return 0;
 }
 
+//Sort moves op basis van score (hoog naar laag).
 static inline int sort_moves(moves* move_list)
 {
+    //Move scores array. Deze array is even groot als het aantal moves in move_list.
     int* move_scores = new int[move_list->count];
 
+    //Loop over alle moves in move_list.
     for (int count = 0; count < move_list->count; count++)
+        //Score alle moves.
         move_scores[count] = score_move(move_list->moves[count]);
 
+    //Loop over current move in move_list.
     for (int current = 0; current < move_list->count; current++)
     {
+        //Loop over volgende move in move_list.
         for (int next = current + 1; next < move_list->count; next++)
         {
+            //Als current move_score is kleiner dan volgende move_score. Dan switch de zetten.
             if (move_scores[current] < move_scores[next])
             {
+                //Store current score.
                 int temp_score = move_scores[current];
+                //Move_score wordt move_score van volgende.
                 move_scores[current] = move_scores[next];
+                //Move score van volgende wordt temp_score wat de move score van current is.
                 move_scores[next] = temp_score;
 
+                //Precies hetzelfde als de score hierboven maar dan met de move ipv score.
                 int temp_move = move_list->moves[current];
                 move_list->moves[current] = move_list->moves[next];
                 move_list->moves[next] = temp_move;
@@ -1979,13 +2000,16 @@ static inline int sort_moves(moves* move_list)
     return 0;
 }
 
-
+//Print move scores.
 void print_move_scores(moves* move_list)
 {
+    //Print "Move scores:".
     std::printf("     Move scores:\n\n");
-
+    
+    //Loop over moves in move_list.
     for (int count = 0; count < move_list->count; count++)
     {
+        //Print zet en score zoals "move: e2e4 score: 0".
         std::printf("     move: ");
         print_move(move_list->moves[count]);
         std::printf(" score: %d\n", score_move(move_list->moves[count]));
