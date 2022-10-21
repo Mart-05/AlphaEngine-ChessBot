@@ -2140,7 +2140,7 @@ static inline int negamax(int alpha, int beta, int depth)
     return alpha;
 }
 
-
+//Search positie voor beste zet.
 void search_position(int depth)
 {
     nodes = 0;
@@ -2327,28 +2327,36 @@ void uci_loop()
         //Zorgt ervoor dat de output bij de gui aankomt. 
         fflush(stdout);
 
-        
+        //Get user / GUI input.
         if (!fgets(input, 2000, stdin))
             continue;
+        //Anders check dat het niet begint met een nieuwe regel.
         else if (input[0] == '\n')
             continue;
+        //Anders als isready, dan print readyok.
         else if (strncmp(input, "isready", 7) == 0)
         {
+            //Print ready ok met een nieuwe regel.
             std::printf("readyok\n");
             continue;
         }
+        //Anders als position, dan parse position.
         else if (strncmp(input, "position", 8) == 0)
             parse_position(input);
+        //Anders als ucinewgame, dan parse start_position.
         else if (strncmp(input, "ucinewgame", 10) == 0)
             parse_position("position startpos");
+        //Anders als go, dan parse go.
         else if (strncmp(input, "go", 2) == 0)
             parse_go(input);
+        //Anders als quit, dan break (stop).
         else if (strncmp(input, "quit", 4) == 0)
             break;
+        //Anders als uci, dan info printen.
         else if (strncmp(input, "uci", 3) == 0)
         {
-            std::printf("id name CPPChess\n");
-            std::printf("id author DevRudolf\n");
+            std::printf("id name AlphaEngine\n");
+            std::printf("id author Mart\n");
             std::printf("uciok\n");
         }
     }
