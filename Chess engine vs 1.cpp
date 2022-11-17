@@ -2015,11 +2015,13 @@ void print_move_scores(moves* move_list)
         std::printf(" score: %d\n", score_move(move_list->moves[count]));
     }
 }
-
+// quiescence search
 static inline int quiescence(int alpha, int beta)
 {
+    // verhoog node count
     nodes++;
 
+    // evaluatie functie
     int eval = evaluate();
 
     if (eval >= beta)
@@ -2097,7 +2099,7 @@ static inline int negamax(int alpha, int beta, int depth)
     //Vergroot nodes.
     nodes++;
 
-    //Variabele in_check.
+    //Variabele in_check (koning).
     int in_check = is_square_attacked((side == white) ? get_ls1b_index(bitboards[K]) :
         get_ls1b_index(bitboards[k]), side ^ 1);
 
@@ -2155,8 +2157,10 @@ static inline int negamax(int alpha, int beta, int depth)
         //Als de score groter of gelijk is aan beta. (Node fails high).
         if (score >= beta)
         {
+            // voor quiet moves
             if (get_move_capture(move_list->moves[count]) == 0)
             {
+                //store killer moves
                 killer_moves[1][ply] = killer_moves[0][ply];
                 killer_moves[0][ply] = move_list->moves[count];
             }
@@ -2167,7 +2171,9 @@ static inline int negamax(int alpha, int beta, int depth)
         //Als de score groter is dan alpha (betere zet).
         if (score > alpha)
         {
+            // voor quiet moves
             if (get_move_capture(move_list->moves[count]) == 0)
+              //store history moves
                 history_moves[get_move_piece(move_list->moves[count])][get_move_target(move_list->moves[count])] += depth;
 
             //Stel alpha gelijk aan score.
@@ -2175,10 +2181,14 @@ static inline int negamax(int alpha, int beta, int depth)
 
             found_pv = 1;
 
+            // schrijf een pv move uit de tabel
             pv_table[ply][ply] = move_list->moves[count];
+            // loop over de ply
             for (int next = ply + 1; next < pv_length[ply + 1]; next++)
+               // De volgende moves die nog moeten komen uit de tabel moeten in de lijn van deze ply worden gezet
                 pv_table[ply][next] = pv_table[ply + 1][next];
 
+            // verander pv length
             pv_length[ply] = pv_length[ply + 1];
         }
     }
