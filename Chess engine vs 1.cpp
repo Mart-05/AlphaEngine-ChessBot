@@ -1878,10 +1878,12 @@ static int mvv_lva[12][12] = {
     101, 201, 301, 401, 501, 601,  101, 201, 301, 401, 501, 601,
     100, 200, 300, 400, 500, 600,  100, 200, 300, 400, 500, 600
 };
-
+// constante voor de max PLY in één search
 const int MAX_PLY = 64;
-
+// killer moves [id][ply]
 int killer_moves[2][MAX_PLY];
+
+// history moves [id][ply]
 int history_moves[12][64];
 
 int pv_length[MAX_PLY];
@@ -1895,14 +1897,20 @@ long nodes;
 //Half move dus een zet van een kant.
 int ply;
 
+// enable PV scoring
 static inline void enable_pv_scoring(moves* move_list)
 {
+    // als we het gaan scoren, moeten we follow pv uitzetten
     follow_pv = 0;
+    // over de moves in de move lijst loopen
     for (int count = 0; count < move_list->count; count++)
     {
+        // hebben we de pv move
         if (pv_table[0][ply] == move_list->moves[count])
         {
+            // enable move scoring
             score_pv = 1;
+            // pv weer aanzetten
             follow_pv = 1;
         }
     }
@@ -1913,11 +1921,15 @@ static inline int score_move(int move)
 {
     int piece_score = material_score[get_move_piece(move)];
 
+    // als pv move scoring aan staat
     if (score_pv)
     {
+        // checken of het de pv move is
         if (pv_table[0][ply] == move)
         {
+           // disable score PV flag
             score_pv = 0;
+            // geef pv de hoogste score, zodat het als eerste move opkomt
             return 20000;
         }
     }
@@ -2092,7 +2104,7 @@ static inline int negamax(int alpha, int beta, int depth)
     //Als de depth 0 is, dan return iets??
     if (depth == 0)
         return quiescence(alpha, beta);
-
+// zorgt ervoor dat engine niet crash (ofwel niet overflowt)
     if (ply > MAX_PLY - 1)
         return evaluate();
 
@@ -2113,7 +2125,9 @@ static inline int negamax(int alpha, int beta, int depth)
     //Genereer zetten.
     generate_moves(move_list);
 
+    // als we pv gebruiken, dan moet de pv move gescored worden
     if (follow_pv)
+        // dus zet pv scoring aan 
         enable_pv_scoring(move_list);
 
     sort_moves(move_list);
@@ -2210,16 +2224,21 @@ static inline int negamax(int alpha, int beta, int depth)
 //Search positie voor beste zet.
 void search_position(int depth)
 {
+    //reset nodes teller voor nieuwe evaluation
     nodes = 0;
+    //reset pv flags
     follow_pv = 0;
     score_pv = 0;
+    // clear "cache" van gebruikte tabellen van de killer moves/history moves/ pv table/ pv length
     memset(killer_moves, 0, sizeof(killer_moves));
     memset(history_moves, 0, sizeof(history_moves));
     memset(pv_table, 0, sizeof(pv_table));
     memset(pv_length, 0, sizeof(pv_length));
 
+    // iterative deepening (evaluation maar dan per depth)
     for (int current = 1; current <= depth; current++)
     {
+        // we volgen pv, dus we zetten pv aan
         follow_pv = 1;
         //Zoek de beste zet in de gegeven positie.
         int score = negamax(-50000, 50000, current);
