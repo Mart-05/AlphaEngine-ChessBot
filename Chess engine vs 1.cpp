@@ -1958,18 +1958,21 @@ static inline int score_move(int move)
             }
         }
 
-        //Return score [source piece][target piece]. 10000 staat niet in video 54.
+        //Return score [source piece][target piece]. 10000 staat niet in video 54 (dit staat in 57).
         return mvv_lva[get_move_piece(move)][target_piece] + 10000;
     }
     
-    //Quiet move.
+    // Score quiet move.
     else
     {
+        //score eerste killer move.
         if (killer_moves[0][ply] == move)
             return 9000;
+        //score tweede killer move.
         else if (killer_moves[1][ply] == move)
             return 8000;
         else
+           //score history moves
             return history_moves[get_move_piece(move)][get_move_target(move)] + piece_score;
     }
     return 0;
@@ -2097,8 +2100,10 @@ static inline int quiescence(int alpha, int beta)
 //Negamax alpha-beta search.
 static inline int negamax(int alpha, int beta, int depth)
 {
+   // de find pv variabele definiëren
     int found_pv = 0;
 
+    // init pv length
     pv_length[ply] = ply;
 
     //Als de depth 0 is, dan return iets??
@@ -2150,15 +2155,21 @@ static inline int negamax(int alpha, int beta, int depth)
         //Legale zetten +1
         legal_moves++;
 
-        //Variabele: score.
+        //Variabele to score current move (van de static evaluation)
         int score;
 
+        // Wanneer move is gevonden met score tussen alpha en beta
         if (found_pv)
         {
+            // Er van uit gaan dat alle andere moves slecht zijn ipv dat er misschien één bijzit die wel goed is
             score = -negamax(-alpha - 1, -alpha, depth - 1);
+           //Als het algoritme fout zit en de score toch tussen alpha en beta zit, dan  moet hij opnieuw zoeken (dus opnieuw alfa beta search). Dit is dus minder snel
+            //dan als hij meteen was gaan zoeken naar een move die wel goed is. Echter gebeurd dit niet vaak genoeg, dus is het het wel waard.
             if ((score > alpha) && (score < beta))
+               // opnieuw zoeken naar de move die blijkt goed te zijn op de normale alfa beta manier
                 score = -negamax(-beta, -alpha, depth - 1);
         }
+       //voor andere typen moves
         else
             //Geef de zet een score.
             score = -negamax(-beta, -alpha, depth - 1);
@@ -2193,6 +2204,7 @@ static inline int negamax(int alpha, int beta, int depth)
             //Stel alpha gelijk aan score.
             alpha = score;
 
+            //enable found pv flag
             found_pv = 1;
 
             // schrijf een pv move uit de tabel
