@@ -2117,7 +2117,29 @@ static inline int negamax(int alpha, int beta, int depth)
 
     //Legal moves variabele.
     int legal_moves = 0;
-
+    
+    //null move pruning
+    if (depth >= 3 && in_check == 0 && ply)
+    {
+    //preserve board state
+    copy_board();
+    
+    //switching side, so opponent has an extra move to make
+    side ^=1;
+    
+    //reset enpassement capture square
+    enpassant = no_sq;
+   
+   //search moves with reduced search depth to find beta cutoffs (R is dus een reduction limit)
+   int score =-negamax(-beta, -beta + 1, depth - 1 - 2);
+   
+   //restore board state
+   take_back();
+   
+   //fail hard beta cutoff
+   if (score >= beta)
+   return beta;
+    }
     //Creeër move list genaamd moves.
     moves move_list[1];
     //Genereer zetten.
