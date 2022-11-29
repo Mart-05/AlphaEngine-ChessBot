@@ -1909,7 +1909,7 @@ static inline void enable_pv_scoring(moves* move_list)
     }
 }
 
-//Geef elke zet een score kwa goed/slecht.
+//Geef elke zet een score kwa goed/slecht voor het evalueren zodat move ordering.
 static inline int score_move(int move)
 {
     int piece_score = material_score[get_move_piece(move)];
