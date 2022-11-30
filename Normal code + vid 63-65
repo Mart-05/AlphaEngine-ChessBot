@@ -2099,7 +2099,6 @@ static inline int negamax(int alpha, int beta, int depth)
     // de find pv variabele definiëren
     int found_pv = 0;
 
-   
     // init pv length
     pv_length[ply] = ply;
 
@@ -2180,20 +2179,6 @@ static inline int negamax(int alpha, int beta, int depth)
         //Variabele to score current move (van de static evaluation)
         int score;
 
-        // Wanneer move is gevonden met score tussen alpha en beta
-        if (found_pv)
-        {
-            // Er van uit gaan dat alle andere moves slecht zijn ipv dat er misschien één bijzit die wel goed is
-            score = -negamax(-alpha - 1, -alpha, depth - 1);
-            //Als het algoritme fout zit en de score toch tussen alpha en beta zit, dan  moet hij opnieuw zoeken (dus opnieuw alfa beta search). Dit is dus minder snel
-             //dan als hij meteen was gaan zoeken naar een move die wel goed is. Echter gebeurd dit niet vaak genoeg, dus is het het wel waard.
-            if ((score > alpha) && (score < beta))
-                // opnieuw zoeken naar de move die blijkt goed te zijn op de normale alfa beta manier
-                score = -negamax(-beta, -alpha, depth - 1);
-        }
-        //voor andere typen moves
-        else
-            {
             // Full depth searched
             if(moves_searched == 0) // First move, use full-window search
             //Geef de zet een score.
@@ -2216,19 +2201,19 @@ static inline int negamax(int alpha, int beta, int depth)
              // Hack to ensure that full-depth search is done.
               else score = alpha+1;  
               
-              //if found a better move using LMR 
+              // PVS 
               if(score > alpha) 
                {
-               //research at full depth but with narrowed score bandwith
+               //Wanneer je een score hebt gevonden tussen alpha en beta, de rest van de moves wordt dan vanuit gegaan dat ze slecht zijn. Dit is sneller dan als gedacht wordt dat er wel nog een goede move is.
                 score = -negamax(-alpha - 1), -alpha, depth-1);
                 
-                // If LMR fails, search af full depth
+                // Als er toch een betere move is, dan moet op de normale alpha beta manier gezocht worden.
                 if((score > alpha && (score < beta))
                   score = -negamax(-beta, -alpha, depth-1);
                   }
               }
             
-            }
+            
 
         //Ply -1.
         ply--;
@@ -2262,9 +2247,6 @@ static inline int negamax(int alpha, int beta, int depth)
 
             //Stel alpha gelijk aan score.
             alpha = score;
-
-            //enable found pv flag
-            found_pv = 1;
 
             // schrijf een pv move uit de tabel
             pv_table[ply][ply] = move_list->moves[count];
