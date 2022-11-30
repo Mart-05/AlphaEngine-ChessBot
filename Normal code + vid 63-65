@@ -2089,6 +2089,9 @@ static inline int quiescence(int alpha, int beta)
     //node (move) fails low (of hetzelfde dan alpha of lager)
     return alpha;
 }
+const int full_depth_moves = 4;
+const int reduction_limit = 3;
+
 
 //Negamax alpha-beta search.
 static inline int negamax(int alpha, int beta, int depth)
@@ -2096,6 +2099,7 @@ static inline int negamax(int alpha, int beta, int depth)
     // de find pv variabele definiëren
     int found_pv = 0;
 
+   
     // init pv length
     pv_length[ply] = ply;
 
@@ -2151,6 +2155,9 @@ static inline int negamax(int alpha, int beta, int depth)
         enable_pv_scoring(move_list);
 
     sort_moves(move_list);
+    
+    //number of moves searched in a move list
+    int moves_searched = 0;
 
     //Loop over zetten in move_list.
     for (int count = 0; count < move_list->count; count++)
@@ -2186,14 +2193,51 @@ static inline int negamax(int alpha, int beta, int depth)
         }
         //voor andere typen moves
         else
+            {
+            // Full depth searched
+            if(moves_searched == 0) // First move, use full-window search
             //Geef de zet een score.
             score = -negamax(-beta, -alpha, depth - 1);
+           
+           // LMR
+            else 
+            {
+              // condition to consider LMR
+              if(
+              moves_searched >= full_depth_moves && 
+              depth >= reduction_limit && 
+              in_check == 0 &&
+              get_move_capture(move_list->moves[count]) == 0 &&
+              get_move_promoted(move_list->moves[count]) ==0
+              )
+               // Search this move with reduced depth:
+                score = -negamax(-alpha - 1), -alpha, depth-2);
+             
+             // Hack to ensure that full-depth search is done.
+              else score = alpha+1;  
+              
+              //if found a better move using LMR 
+              if(score > alpha) 
+               {
+               //research at full depth but with narrowed score bandwith
+                score = -negamax(-alpha - 1), -alpha, depth-1);
+                
+                // If LMR fails, search af full depth
+                if((score > alpha && (score < beta))
+                  score = -negamax(-beta, -alpha, depth-1);
+                  }
+              }
+            
+            }
 
         //Ply -1.
         ply--;
         //Zet terug nemen.
         take_back();
 
+        //increment moves searched
+        moves_searched++;
+        
         //Als de score groter of gelijk is aan beta. (Node fails high).
         if (score >= beta)
         {
