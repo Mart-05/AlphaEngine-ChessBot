@@ -189,7 +189,7 @@ void print_bitboard(U64 bitboard)
     //Herhaald 9x voor het aantal horizontale rijen (0, 1, 2, 3, 4, 5, 6, 7, 8).
     for (int rank = 0; rank < 8; rank++)
     {
-        //Herhaald 8x voor het aantal verticale rijen voor nu (0, 1, 2, 3, 4, 5, 6, 7, 8) maar eigenlijk (a, b, c, d, e, f, g, h). Dan zijn alle vakjes geweest want je hebt 8x8 + een rij onder en links om de naam van het vakje aan te geven. 
+        //Herhaald 8x voor het aantal verticale rijen voor nu (0, 1, 2, 3, 4, 5, 6, 7, 8) maar eigenlijk (a, b, c, d, e, f, g, h). Dan zijn alle vakjes geweest want je hebt 8x8 + een rij onder en links om de naam van het vakje aan te geven.
         for (int file = 0; file < 8; file++)
         {
             //Benoemd het nummer van het vakje van linksboven naar rechtsonder. Linksboven dus 1, daarna 2 en als laatste 64 rechtsonder.
@@ -649,7 +649,7 @@ U64 mask_rook_attacks(int square)
     int tr = square / 8;
     int tf = square % 8;
 
-    //Waar kan rook staan. 
+    //Waar kan rook staan.
     for (r = tr + 1; r <= 6; r++) attacks |= (1ULL << (r * 8 + tf));
     for (r = tr - 1; r >= 1; r--) attacks |= (1ULL << (r * 8 + tf));
     for (f = tf + 1; f <= 6; f++) attacks |= (1ULL << (tr * 8 + f));
@@ -746,7 +746,7 @@ void init_leapers_attacks()
     }
 }
 
-//Alle mogelijke manieren om een attack mask te hebben. 
+//Alle mogelijke manieren om een attack mask te hebben.
 U64 set_occupancy(int index, int bits_in_mask, U64 attack_mask)
 {
     U64 occupancy = 0ULL;
@@ -814,7 +814,7 @@ U64 find_magic_number(int square, int relevant_bits, int bishop)
         // skip inappropriate magic numebrs
         if (count_bits((attack_mask * magic_number) & 0xFF00000000000000) < 6) continue;
 
-        //init used attacks 
+        //init used attacks
         memset(used_attacks, 0ULL, sizeof(used_attacks));
 
         //init index & fail flag
@@ -961,9 +961,9 @@ verder ook 64 target squares. 12 verschillende stukken wit en zwart samen, hierv
 
 //Encode move. Backslash omdat meerdere lines code bij elkaar horen??
 #define encode_move(source, target, piece, promoted, capture, doublep, enpassant, castling) \
-    (source << 0) | (target << 6) | (piece << 12) | (promoted << 16) | (capture << 20) | (doublep << 21) | (enpassant << 22) | (castling << 23) 
+    (source << 0) | (target << 6) | (piece << 12) | (promoted << 16) | (capture << 20) | (doublep << 21) | (enpassant << 22) | (castling << 23)
     //<<6 is 6 naar links want normaal begint het rechts en de 1tjes staan 6 naar links voor target zoals hierboven te zien. Voor de rest ook zo. Vid 27 extra uitleg.
-        
+
 //Define shortcuts voor later, de move & hexidecimal staat voor de 1en aan het begin van dit hoofdstuk "encoding moves". Vid 27 extra uitleg.
 //"&" is een bitwise operation voor alleen 1 als beide 1 zijn. Hierdoor krijg je alleen de source bij source en niet andere informatie erbij.
 #define get_move_source(move) (move & 0x3f)
@@ -1230,7 +1230,7 @@ static inline int make_move(int move, int move_flag)
                 pop_bit(bitboards[R], h1);
                 set_bit(bitboards[R], f1);
                 break;
-                //Als target_square = c1.            
+                //Als target_square = c1.
             case (c1):
                 //Verwijder toren op a1 en zet op d1
                 pop_bit(bitboards[R], a1);
@@ -1279,7 +1279,7 @@ static inline int make_move(int move, int move_flag)
         //Legal move
         else return 1;
     }
-    //Als de zet iets aanvalt. 
+    //Als de zet iets aanvalt.
     else
     {
         //Zeker weten dat de zet een aanval is.
@@ -1296,7 +1296,7 @@ static inline void generate_moves(moves* move_list)
     //definieer waar het stuk staat en waar het naartoe gaat
     int source_square, target_square;
 
-    // definieer hoe het bitboard van het huidige stuk eruitziet & z'n aanvallen en maak er een kopie die wordt geloopt (meer info: vid 23 12:00=18:00) 
+    // definieer hoe het bitboard van het huidige stuk eruitziet & z'n aanvallen en maak er een kopie die wordt geloopt (meer info: vid 23 12:00=18:00)
     U64 bitboard, attacks;
 
     //Loop over alle stukken
@@ -1348,83 +1348,84 @@ static inline void generate_moves(moves* move_list)
 
                     //Als de pion iets aanvalt
                     while (attacks)
-
+                    {
                         //Waar een pion naartoe kan.
                         target_square = get_ls1b_index(attacks);
 
-                    //Als pion op laatste rij, dan promotie.
-                    if (source_square >= a7 && source_square <= h7)
-                    {
-                        //Voeg de zet toe aan de mogelijke zetten (Aanval+promotie).
-                        add_move(move_list, encode_move(source_square, target_square, piece, Q, 1, 0, 0, 0));
-                        add_move(move_list, encode_move(source_square, target_square, piece, R, 1, 0, 0, 0));
-                        add_move(move_list, encode_move(source_square, target_square, piece, B, 1, 0, 0, 0));
-                        add_move(move_list, encode_move(source_square, target_square, piece, N, 1, 0, 0, 0));
+                        //Als pion op laatste rij, dan promotie.
+                        if (source_square >= a7 && source_square <= h7)
+                        {
+                            //Voeg de zet toe aan de mogelijke zetten (Aanval+promotie).
+                            add_move(move_list, encode_move(source_square, target_square, piece, Q, 1, 0, 0, 0));
+                            add_move(move_list, encode_move(source_square, target_square, piece, R, 1, 0, 0, 0));
+                            add_move(move_list, encode_move(source_square, target_square, piece, B, 1, 0, 0, 0));
+                            add_move(move_list, encode_move(source_square, target_square, piece, N, 1, 0, 0, 0));
+                        }
+                        //Als pion niet op laatste rij.
+                        else
+                        {
+                            //Voeg ze zet toe aan de mogelijke zetten (Aanvallen stuk).
+                            add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
+                        }
+                        //Haal de pion weg zodat de zetten voor volgende pion kunnen worden berekend.
+                        pop_bit(attacks, target_square);
                     }
-                    //Als pion niet op laatste rij.
-                    else
-                    {
-                        //Voeg ze zet toe aan de mogelijke zetten (Aanvallen stuk).
-                        add_move(move_list, encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
-                    }
-                    //Haal de pion weg zodat de zetten voor volgende pion kunnen worden berekend.
-                    pop_bit(attacks, target_square);
-                }
 
-                //Als enpassant = een vakje.
-                if (enpassant != no_sq)
-                {
-                    //enpassant attacks = pawn attacks EN enpassant vakje.
-                    U64 enpassant_attacks = pawn_attacks[side][source_square] & (1ULL << enpassant);
-                    //Als enpassant attack kan.
-                    if (enpassant_attacks)
+                    //Als enpassant = een vakje.
+                    if (enpassant != no_sq)
                     {
-                        //Enpassant slaan.
-                        int target_enpassant = get_ls1b_index(enpassant_attacks);
-                        //Voeg de zet toe aan de mogelijke zetten (Enpassant slaan).
-                        add_move(move_list, encode_move(source_square, target_enpassant, piece, 0, 1, 0, 1, 0));
+                        //enpassant attacks = pawn attacks EN enpassant vakje.
+                        U64 enpassant_attacks = pawn_attacks[side][source_square] & (1ULL << enpassant);
+                        //Als enpassant attack kan.
+                        if (enpassant_attacks)
+                        {
+                            //Enpassant slaan.
+                            int target_enpassant = get_ls1b_index(enpassant_attacks);
+                            //Voeg de zet toe aan de mogelijke zetten (Enpassant slaan).
+                            add_move(move_list, encode_move(source_square, target_enpassant, piece, 0, 1, 0, 1, 0));
+                        }
+                    }
+                    //Haal de least significant bit weg.
+                    pop_bit(bitboard, source_square);
+                }
+            }
+
+            //Castling voor wit.
+            if (piece == K)
+            {
+                //Kingside castling.
+                if (castle & wk)
+                {
+                    //De vakjes ertussen zijn niet bezet door een stuk.
+                    if (!get_bit(occupancies[both], f1) && !get_bit(occupancies[both], g1))
+                    {
+                        //De vakjes ertussen worden niet aangevallen door zwart.
+                        if (!is_square_attacked(e1, black) && !is_square_attacked(f1, black))
+                        {
+                            //Voeg de zet toe aan de mogelijke zetten (Kingside castling).
+                            add_move(move_list, encode_move(e1, g1, piece, 0, 0, 0, 0, 1));
+                        }
                     }
                 }
-                //Haal de least significant bit weg.
-                pop_bit(bitboard, source_square);
+                //Queenside castling.
+                if (castle & wq)
+                {
+                    //De vakjes ertussen zijn niet bezet door een stuk.
+                    if (!get_bit(occupancies[both], b1) && !get_bit(occupancies[both], c1) && !get_bit(occupancies[both], d1))
+                    {
+                        //De vakjes ertussen worden niet aangevallen door zwart.
+                        if (!is_square_attacked(d1, black) && !is_square_attacked(e1, black))
+                        {
+                            //Voeg de zet toe aan de mogelijke zetten (Queenside castling).
+                            add_move(move_list, encode_move(e1, c1, piece, 0, 0, 0, 0, 1));
+                        }
+                    }
+                }
             }
         }
 
-        //Castling voor wit.
-        if (piece == K)
-        {
-            //Kingside castling.
-            if (castle & wk)
-            {
-                //De vakjes ertussen zijn niet bezet door een stuk.
-                if (!get_bit(occupancies[both], f1) && !get_bit(occupancies[both], g1))
-                {
-                    //De vakjes ertussen worden niet aangevallen door zwart.
-                    if (!is_square_attacked(e1, black) && !is_square_attacked(f1, black))
-                    {
-                        //Voeg de zet toe aan de mogelijke zetten (Kingside castling).
-                        add_move(move_list, encode_move(e1, g1, piece, 0, 0, 0, 0, 1));
-                    }
-                }
-            }
-            //Queenside castling.
-            if (castle & wq)
-            {
-                //De vakjes ertussen zijn niet bezet door een stuk.
-                if (!get_bit(occupancies[both], b1) && !get_bit(occupancies[both], c1) && !get_bit(occupancies[both], d1))
-                {
-                    //De vakjes ertussen worden niet aangevallen door zwart.
-                    if (!is_square_attacked(d1, black) && !is_square_attacked(e1, black))
-                    {
-                        //Voeg de zet toe aan de mogelijke zetten (Queenside castling).
-                        add_move(move_list, encode_move(e1, c1, piece, 0, 0, 0, 0, 1));
-                    }
-                }
-            }
-        }
-    
 
-    //Generate zwarte pion bewegingen en zwarte koning rokeer moves.
+        //Generate zwarte pion bewegingen en zwarte koning rokeer moves.
         else
         {
             //Als stuk is pion.
@@ -1469,7 +1470,7 @@ static inline void generate_moves(moves* move_list)
                     //Als de pion iets aanvalt
                     while (attacks)
                     {
-                        //Target square = eerste vakje dat aangevallen wordt vanaf linksboven. 
+                        //Target square = eerste vakje dat aangevallen wordt vanaf linksboven.
                         target_square = get_ls1b_index(attacks);
 
                         //Als pion op laatste rij, dan promotie.
@@ -1814,7 +1815,7 @@ static inline int evaluate()
     // init piece & square
     int piece, square;
 
-    // loop over piece bitboards 
+    // loop over piece bitboards
     for (int bb_piece = P; bb_piece <= k; bb_piece++)
     {
         // init bitboard piece copy
@@ -1913,6 +1914,7 @@ static inline void enable_pv_scoring(moves* move_list)
 static inline int score_move(int move)
 {
     int piece_score = material_score[get_move_piece(move)];
+
 
     // als pv move scoring aan staat
     if (score_pv)
@@ -2072,7 +2074,7 @@ static inline int quiescence(int alpha, int beta)
         //take move back
         take_back();
 
-        //fail hard beta cutoff 
+        //fail hard beta cutoff
         if (score >= beta)
         {
             //node (move) fails high
@@ -2097,7 +2099,7 @@ const int reduction_limit = 3;
 static inline int negamax(int alpha, int beta, int depth)
 {
     // de find pv variabele definiëren
-    int found_pv = 0;
+
 
     // init pv length
     pv_length[ply] = ply;
@@ -2120,28 +2122,28 @@ static inline int negamax(int alpha, int beta, int depth)
 
     //Legal moves variabele.
     int legal_moves = 0;
-    
+
     //null move pruning
     if (depth >= 3 && in_check == 0 && ply)
     {
-    //preserve board state
-    copy_board();
-    
-    //switching side, so opponent has an extra move to make
-    side ^=1;
-    
-    //reset enpassement capture square
-    enpassant = no_sq;
-   
-   //search moves with reduced search depth to find beta cutoffs (R is dus een reduction limit)
-   int score =-negamax(-beta, -beta + 1, depth - 1 - 2);
-   
-   //restore board state
-   take_back();
-   
-   //fail hard beta cutoff
-   if (score >= beta)
-   return beta;
+        //preserve board state
+        copy_board();
+
+        //switching side, so opponent has an extra move to make
+        side ^= 1;
+
+        //reset enpassement capture square
+        enpassant = no_sq;
+
+        //search moves with reduced search depth to find beta cutoffs (R is dus een reduction limit)
+        int score = -negamax(-beta, -beta + 1, depth - 1 - 2);
+
+        //restore board state
+        take_back();
+
+        //fail hard beta cutoff
+        if (score >= beta)
+            return beta;
     }
     //Creeër move list genaamd moves.
     moves move_list[1];
@@ -2150,11 +2152,11 @@ static inline int negamax(int alpha, int beta, int depth)
 
     // als we pv gebruiken, dan moet de pv move gescored worden
     if (follow_pv)
-        // dus zet pv scoring aan 
+        // dus zet pv scoring aan
         enable_pv_scoring(move_list);
 
     sort_moves(move_list);
-    
+
     //number of moves searched in a move list
     int moves_searched = 0;
 
@@ -2179,50 +2181,50 @@ static inline int negamax(int alpha, int beta, int depth)
         //Variabele to score current move (van de static evaluation)
         int score;
 
-            // Full depth searched
-            if(moves_searched == 0) // First move, use full-window search
-            //Geef de zet een score.
-            score = -negamax(-beta, -alpha, depth - 1);
-           
-           // LMR
-            else 
+        // Full depth searched
+        if (moves_searched == 0) // First move, use full-window search
+        //Geef de zet een score.
+            score = -negamax( -beta, -alpha, depth - 1);
+
+        // LMR
+        else
+        {
+            // condition to consider LMR
+            if (
+                moves_searched >= full_depth_moves &&
+                depth >= reduction_limit &&
+                in_check == 0 &&
+                get_move_capture(move_list->moves[count]) == 0 &&
+                get_move_promoted(move_list->moves[count]) == 0
+                )
+                // Search this move with reduced depth:
+                score = -negamax(-alpha - 1, -alpha, depth - 2);
+
+                // Hack to ensure that full-depth search is done.
+            else score = alpha + 1;
+
+            // PVS
+            if (score > alpha)
             {
-              // condition to consider LMR
-              if(
-              moves_searched >= full_depth_moves && 
-              depth >= reduction_limit && 
-              in_check == 0 &&
-              get_move_capture(move_list->moves[count]) == 0 &&
-              get_move_promoted(move_list->moves[count]) ==0
-              )
-               // Search this move with reduced depth:
-                score = -negamax(-alpha - 1), -alpha, depth-2);
-             
-             // Hack to ensure that full-depth search is done.
-              else score = alpha+1;  
-              
-              // PVS 
-              if(score > alpha) 
-               {
-               //Wanneer je een score hebt gevonden tussen alpha en beta, de rest van de moves wordt dan vanuit gegaan dat ze slecht zijn. Dit is sneller dan als gedacht wordt dat er wel nog een goede move is.
-                score = -negamax(-alpha - 1), -alpha, depth-1);
-                
+                //Wanneer je een score hebt gevonden tussen alpha en beta, de rest van de moves wordt dan vanuit gegaan dat ze slecht zijn. Dit is sneller dan als gedacht wordt dat er wel nog een goede move is.
+                score = -negamax(-alpha - 1, -alpha, depth - 1);
+
                 // Als er toch een betere move is, dan moet op de normale alpha beta manier gezocht worden.
-                if((score > alpha && (score < beta))
-                  score = -negamax(-beta, -alpha, depth-1);
-                  }
-              }
-            
-            
+                if ((score > alpha) && (score < beta))
+                    score = -negamax(-beta, -alpha, depth - 1);
+            }
+        }
+
+
 
         //Ply -1.
         ply--;
-        //Zet terug nemen.
-        take_back();
+            //Zet terug nemen.
+            take_back();
 
-        //increment moves searched
-        moves_searched++;
-        
+            //increment moves searched
+            moves_searched++;
+
         //Als de score groter of gelijk is aan beta. (Node fails high).
         if (score >= beta)
         {
@@ -2277,6 +2279,7 @@ static inline int negamax(int alpha, int beta, int depth)
 //Search positie voor beste zet.
 void search_position(int depth)
 {
+    int score = 0;
     //reset nodes teller voor nieuwe evaluation
     nodes = 0;
     //reset pv flags
@@ -2288,9 +2291,9 @@ void search_position(int depth)
     memset(pv_table, 0, sizeof(pv_table));
     memset(pv_length, 0, sizeof(pv_length));
 
-//Define alpha beta values
-int alpha = -50000;
-int beta = 50000;
+    //Define alpha beta values
+    int alpha = -50000;
+    int beta = 50000;
 
     // iterative deepening (evaluation maar dan per depth)
     for (int current = 1; current <= depth; current++)
@@ -2299,16 +2302,16 @@ int beta = 50000;
         follow_pv = 1;
         //Zoek de beste zet in de gegeven positie.
         int score = negamax(alpha, beta, current);
-             
-        if ((score <= alpha) || (score >= beta)) {
-        alpha = -50000;    // We fell outside the window, so try again with a
-        beta = 50000;      //  full-width window (and the same depth).
-        continue;
 
-    }
-    // Set up the window for the next iteration.
-    alpha = score - 50;  
-    beta = score + 50;
+        if ((score <= alpha) || (score >= beta)) {
+            alpha = -50000;    // We fell outside the window, so try again with a
+            beta = 50000;      //  full-width window (and the same depth).
+            continue;
+
+        }
+        // Set up the window for the next iteration.
+        alpha = score - 50;
+        beta = score + 50;
 
 
         //Print belangrijke info.
@@ -2356,14 +2359,14 @@ int parse_move(std::string move_string)
             //Init promoted piece.
             int promoted_piece = get_move_promoted(move);
 
-            //Als promotie in 
+            //Als promotie in
             if (promoted_piece)
             {
                 //Als 5e cijfer/letter een qrb of n, dan promotie.
                 if (move_string[4] == 'q' || move_string[4] == 'r' || move_string[4] == 'b' || move_string[4] == 'n')
                     //Return legal move.
                     return move;
-                //Return illegal move.                          
+                //Return illegal move.
                 return 0;
             }
             //Return legal move. (in tutorial "return 1" vid 44)
@@ -2481,7 +2484,7 @@ void uci_loop()
     {
         //Reset user /gui input.
         memset(input, 0, sizeof(input));
-        //Zorgt ervoor dat de output bij de gui aankomt. 
+        //Zorgt ervoor dat de output bij de gui aankomt.
         fflush(stdout);
 
         //Get user / GUI input.
@@ -2616,7 +2619,7 @@ int main()
 {
     init_all();
 
-    int debug = 0;
+    int debug = 1;
 
     if (debug)
     {
