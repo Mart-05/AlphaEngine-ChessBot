@@ -2318,6 +2318,9 @@ static inline int negamax(int alpha, int beta, int depth)
         //restore board state
         take_back();
 
+	//return 0 als tijd op is
+	if(stopped == 1) return 0;
+
         //fail hard beta cutoff
         if (score >= beta)
             return beta;
