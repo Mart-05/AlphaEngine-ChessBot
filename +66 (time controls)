@@ -2505,7 +2505,8 @@ void search_position(int depth)
 
 
         //Print belangrijke info.
-        std::printf("info score cp %d depth %d nodes %ld pv ", score, current, nodes);
+        printf("info score cp %d depth %d nodes %ld time %d pv ", score, current_depth, nodes, get_time_ms() - starttime);
+	
         for (int count = 0; count < pv_length[0]; count++)
         {
             print_move(pv_table[0][count]);
@@ -2631,24 +2632,89 @@ void parse_position(const char* command)
 void parse_go(const char* command)
 {
 
-    //Skip de go en spatie.
-    command += 3;
-    //Init depth.
+    /*Skip de go en spatie.
+    command += 3;*/
+    
+    // init parameters
     int depth = -1;
-    //Current_depth = command.
-    const char* current_depth = command;
 
-    //Als het woord depth er staat.
-    if (strncmp(command, "depth", 5) == 0) {
-        //Dan skip de depth en spatie.
-        current_depth += 6;
-        //En convert string naar depth en geef het de waarde van current_depth.
-        depth = atoi(current_depth);
+    // init argument
+    char *argument = NULL;
+
+    // infinite search
+    if ((argument = strstr(command,"infinite"))) {}
+
+    // match UCI "binc" command
+    if ((argument = strstr(command,"binc")) && side == black)
+        // parse black time increment
+        inc = atoi(argument + 5);
+
+    // match UCI "winc" command
+    if ((argument = strstr(command,"winc")) && side == white)
+        // parse white time increment
+        inc = atoi(argument + 5);
+
+    // match UCI "wtime" command
+    if ((argument = strstr(command,"wtime")) && side == white)
+        // parse white time limit
+        time = atoi(argument + 6);
+
+    // match UCI "btime" command
+    if ((argument = strstr(command,"btime")) && side == black)
+        // parse black time limit
+        time = atoi(argument + 6);
+
+    // match UCI "movestogo" command
+    if ((argument = strstr(command,"movestogo")))
+        // parse number of moves to go
+        movestogo = atoi(argument + 10);
+
+    // match UCI "movetime" command
+    if ((argument = strstr(command,"movetime")))
+        // parse amount of time allowed to spend to make a move
+        movetime = atoi(argument + 9);
+
+    // match UCI "depth" command
+    if ((argument = strstr(command,"depth")))
+        // parse search depth
+        depth = atoi(argument + 6);
+
+    // if move time is not available
+    if(movetime != -1)
+    {
+        // set time equal to move time
+        time = movetime;
+
+        // set moves to go to 1
+        movestogo = 1;
     }
-    //Anders
-    else
-        //Depth = 5
-        depth = 5;
+
+    // init start time
+    starttime = get_time_ms();
+
+    // init search depth
+    depth = depth;
+
+    // if time control is available
+    if(time != -1)
+    {
+        // flag we're playing with time control
+        timeset = 1;
+
+        // set up timing
+        time /= movestogo;
+        time -= 50;
+        stoptime = starttime + time + inc;
+    }
+
+    // if depth is not available
+    if(depth == -1)
+        // set depth to 64 plies (takes ages to complete...)
+        depth = 64;
+
+    // print debug info
+    printf("time:%d start:%d stop:%d depth:%d timeset:%d\n",
+    time, starttime, stoptime, depth, timeset);
 
     //idk???
     search_position(depth);
@@ -2776,7 +2842,8 @@ void perft(int depth)
     //Generate zetten in de move list.
     generate_moves(move_list);
     //Start tracking tijd.
-    auto start_time = get_time_ms();
+    long start = get_time_ms();
+    
     //Loop over alle gegenereerde zetten in  move_list.
     for (int move_count = 0; move_count < move_list->count; move_count++)
     {
