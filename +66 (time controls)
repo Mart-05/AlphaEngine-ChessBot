@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
-
+#include "Source.h"
 
 /**************
 
@@ -115,7 +115,7 @@ int movestogo = 30;
 int movetime = -1;
 
 // UCI "time" command holder (ms)
-int time = -1;
+int time1 = -1;
 
 // UCI "inc" command's time increment holder
 int inc = 0;
@@ -207,7 +207,7 @@ void read_input()
     int bytes;
 
     // GUI/user input
-    char input[256] = "", * endc;
+    char input[256] = "", *endc;
 
     // "listen" to STDIN
     if (input_waiting())
@@ -215,12 +215,12 @@ void read_input()
         // tell engine to stop calculating
         stopped = 1;
 
-        /*// loop to read bytes from STDIN
+        // loop to read bytes from STDIN
         do
         {
             // read bytes from STDIN
             bytes = read(fileno(stdin), input, 256);
-        }*/
+        }
 
         // until bytes available
         while (bytes < 0);
@@ -2656,12 +2656,12 @@ void parse_go(const char* command)
     // match UCI "wtime" command
     if ((argument == strstr(command, "wtime")) && side == white)
         // parse white time limit
-        time = atoi(argument + 6);
+        time1 = atoi(argument + 6);
 
     // match UCI "btime" command
     if ((argument == strstr(command, "btime")) && side == black)
         // parse black time limit
-        time = atoi(argument + 6);
+        time1 = atoi(argument + 6);
 
     // match UCI "movestogo" command
     if ((argument == strstr(command, "movestogo")))
@@ -2682,7 +2682,7 @@ void parse_go(const char* command)
     if (movetime != -1)
     {
         // set time equal to move time
-        time = movetime;
+        time1 = movetime;
 
         // set moves to go to 1
         movestogo = 1;
@@ -2695,15 +2695,15 @@ void parse_go(const char* command)
     depth = depth;
 
     // if time control is available
-    if (time != -1)
+    if (time1 != -1)
     {
         // flag we're playing with time control
         timeset = 1;
 
         // set up timing
-        time /= movestogo;
-        time -= 50;
-        stoptime = starttime + time + inc;
+        time1 /= movestogo;
+        time1 -= 50;
+        stoptime = starttime + time1 + inc;
     }
 
     // if depth is not available
