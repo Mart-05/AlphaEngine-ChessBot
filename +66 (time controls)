@@ -8,6 +8,7 @@
 #include <string.h>
 #include <string>
 
+
 /**************
 
 MACROS
@@ -214,12 +215,12 @@ void read_input()
         // tell engine to stop calculating
         stopped = 1;
 
-        // loop to read bytes from STDIN
+        /*// loop to read bytes from STDIN
         do
         {
             // read bytes from STDIN
             bytes = read(fileno(stdin), input, 256);
-        }
+        }*/
 
         // until bytes available
         while (bytes < 0);
