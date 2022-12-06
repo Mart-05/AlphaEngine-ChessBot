@@ -1,12 +1,12 @@
 #include <bitset>
 #include <map>
 #include <iostream>
-#include <chrono>
-#include <windows.h>
+#include <windows.h>  
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <string>
+#include <io.h>
+#include <chrono>
 
 /**************
 
@@ -114,7 +114,7 @@ int movestogo = 30;
 int movetime = -1;
 
 // UCI "time" command holder (ms)
-int time = -1;
+int time1 = -1;
 
 // UCI "inc" command's time increment holder
 int inc = 0;
@@ -158,16 +158,6 @@ int get_time_ms()
 
 int input_waiting()
 {
-#ifndef WIN32
-    fd_set readfds;
-    struct timeval tv;
-    FD_ZERO(&readfds);
-    FD_SET(fileno(stdin), &readfds);
-    tv.tv_sec = 0; tv.tv_usec = 0;
-    select(16, &readfds, 0, 0, &tv);
-
-    return (FD_ISSET(fileno(stdin), &readfds));
-#else
     static int init = 0, pipe;
     static HANDLE inh;
     DWORD dw;
@@ -195,8 +185,6 @@ int input_waiting()
         GetNumberOfConsoleInputEvents(inh, &dw);
         return dw <= 1 ? 0 : dw;
     }
-
-#endif
 }
 
 // read GUI/user input
@@ -220,7 +208,6 @@ void read_input()
             // read bytes from STDIN
             bytes = read(fileno(stdin), input, 256);
         }
-
         // until bytes available
         while (bytes < 0);
 
@@ -1149,7 +1136,7 @@ typedef struct {
     int moves[256];
     // Move count (ofwel het bijhouden van index van de move)
     int count;
-
+    
 } moves;
 
 //Toevoegen van moves aan de movelist.
@@ -2196,11 +2183,6 @@ void print_move_scores(moves* move_list)
 // quiescence search
 static inline int quiescence(int alpha, int beta)
 {
-    // elke 2047 nodes.
-    if ((nodes & 2047) == 0)
-        //krijg gui input
-        communicate();
-
     // verhoog node count
     nodes++;
 
@@ -2274,8 +2256,10 @@ const int reduction_limit = 3;
 //Negamax alpha-beta search.
 static inline int negamax(int alpha, int beta, int depth)
 {
-    // de find pv variabele definiëren
-
+    // elke 2047 nodes.
+    if ((nodes & 2047) == 0)
+        //krijg gui input
+        communicate();
 
     // init pv length
     pv_length[ply] = ply;
@@ -2393,7 +2377,6 @@ static inline int negamax(int alpha, int beta, int depth)
                     score = -negamax(-beta, -alpha, depth - 1);
             }
         }
-
 
 
         //Ply -1.
@@ -2630,58 +2613,76 @@ void parse_position(const char* command)
 //UCI go command.
 void parse_go(const char* command)
 {
-
-
-
-    // init parameters
+    //Skip de go en spatie.
+    command += 3;
+    //Init depth.
     int depth = -1;
+    //Init movetime
+    int movetime = -1;
+    //Init time1.
+    int time1 = -1;
+    //Current_depth = command.
+    const char* pointer = command;
 
-    // init argument
-    char* argument = NULL;
-
-    // infinite search
-    if ((argument == strstr(command, "infinite"))) {}
-
-    // match UCI "binc" command
-    if ((argument == strstr(command, "binc")) && side == black)
-        // parse black time increment
-        inc = atoi(argument + 5);
-
-    // match UCI "winc" command     
-    if ((argument == strstr(command, "winc")) && side == white)
-        // parse white time increment
-        inc = atoi(argument + 5);
-
-    // match UCI "wtime" command
-    if ((argument == strstr(command, "wtime")) && side == white)
-        // parse white time limit
-        time = atoi(argument + 6);
-
-    // match UCI "btime" command
-    if ((argument == strstr(command, "btime")) && side == black)
-        // parse black time limit
-        time = atoi(argument + 6);
-
-    // match UCI "movestogo" command
-    if ((argument == strstr(command, "movestogo")))
-        // parse number of moves to go
-        movestogo = atoi(argument + 10);
-
-    // match UCI "movetime" command
-    if ((argument == strstr(command, "movetime")))
-        // parse amount of time allowed to spend to make a move
-        movetime = atoi(argument + 9);
-
-    // match UCI "depth" command
-    if ((argument == strstr(command, "depth")))
-        // parse search depth
-        depth = atoi(argument + 6);
+    //Als het woord movestogo er staat.
+    if (strncmp(command, "infinite", 8) == 0) {
+        depth = MAX_PLY;
+    }
+    //Als het woord movestogo er staat.
+    if (strncmp(command, "winc", 4) == 0 && side == white) {
+        //Dan skip de depth en spatie.
+        pointer += 5;
+        //En convert string naar depth en geef het de waarde van current_depth.
+        inc = atoi(pointer);
+    }
+    //Als het woord movestogo er staat.
+    if (strncmp(command, "binc", 4) == 0 && side == black) {
+        //Dan skip de depth en spatie.
+        pointer += 5;
+        //En convert string naar depth en geef het de waarde van current_depth.
+        inc = atoi(pointer);
+    }
+    //Als het woord movestogo er staat.
+    if (strncmp(command, "wtime", 5) == 0 && side == white) {
+        //Dan skip de depth en spatie.
+        pointer += 6;
+        //En convert string naar depth en geef het de waarde van current_depth.
+        time1 = atoi(pointer);
+    }
+    //Als het woord movestogo er staat.
+    if (strncmp(command, "btime", 5) == 0 && side == black) {
+        //Dan skip de depth en spatie.
+        pointer += 6;
+        //En convert string naar depth en geef het de waarde van current_depth.
+        time1 = atoi(pointer);
+    }
+    //Als het woord movestogo er staat.
+    if (strncmp(command, "movestogo", 9) == 0) {
+        //Dan skip de depth en spatie.
+        pointer += 10;
+        //En convert string naar depth en geef het de waarde van current_depth.
+        movestogo = atoi(pointer);
+    }
+    //Als het woord movetime er staat.
+    if (strncmp(command, "movetime", 8) == 0) {
+        //Dan skip de depth en spatie.
+        pointer += 9;
+        //En convert string naar depth en geef het de waarde van current_depth.
+        movetime = atoi(pointer);
+    }
+    //Als het woord depth er staat.
+    if (strncmp(command, "depth", 5) == 0) {
+        //Dan skip de depth en spatie.
+        pointer += 6;
+        //En convert string naar depth en geef het de waarde van current_depth.
+        depth = atoi(pointer);
+    }
 
     // if move time is not available
     if (movetime != -1)
     {
         // set time equal to move time
-        time = movetime;
+        time1 = movetime;
 
         // set moves to go to 1
         movestogo = 1;
@@ -2694,18 +2695,18 @@ void parse_go(const char* command)
     depth = depth;
 
     // if time control is available
-    if (time != -1)
+    if (time1 != -1)
     {
         // flag we're playing with time control
         timeset = 1;
 
         // set up timing
-        time /= movestogo;
-        time -= 50;
-        stoptime = starttime + time + inc;
+        time1 /= movestogo;
+        time1 -= 50;
+        stoptime = starttime + time1 + inc;
     }
 
-    // if depth is not available
+    //if depth is not available
     if (depth == -1)
         // set depth to 64 plies (takes ages to complete...)
         depth = 64;
@@ -2832,7 +2833,7 @@ void perft(int depth)
     //Generate zetten in de move list.
     generate_moves(move_list);
     //Start tracking tijd.
-    long start = get_time_ms();
+    auto start_time = get_time_ms();
 
     //Loop over alle gegenereerde zetten in  move_list.
     for (int move_count = 0; move_count < move_list->count; move_count++)
@@ -2859,20 +2860,20 @@ void perft(int depth)
     //Print aantal nodes.
     std::printf("    Nodes:   %ld\n", nodes);
     //Print tijd sinds laatste zet in ms.
-    std::printf("    Time:    %ld\n", get_time_ms() - start);
+    std::printf("    Time:    %ld\n", get_time_ms() - start_time);
 }
 
 int main()
 {
     init_all();
 
-    int debug = 1;
+    int debug = 0;
 
     if (debug)
     {
         parse_fen(start_position);
         print_board();
-        for (int i = 1; i < 7; i++) {
+        for (int i = 1; i < 6; i++) {
             perft(i);
         }
         /*moves move_list[1];
