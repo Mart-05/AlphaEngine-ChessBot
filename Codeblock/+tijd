@@ -2630,8 +2630,6 @@ void parse_position(const char* command)
 //UCI go command.
 void parse_go(const char* command)
 {
-
-
     // init parameters
     int depth = -1;
 
