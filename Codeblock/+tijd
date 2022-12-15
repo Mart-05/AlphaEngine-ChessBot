@@ -27,8 +27,6 @@ MACROS
 #define killer_position "rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1"
 #define dumb_ai "1rq2b1N/p1p1k1p1/7p/3Qn3/3P4/P7/1PP2PPP/R1B1R1K1 w - - 3 20 "
 
-//Anders werkt het programma niet.
-#pragma warning(disable : 4996)
 
 /**************
 
@@ -142,9 +140,13 @@ Miscellaneous functions
 // get time in milliseconds
 int get_time_ms()
 {
-
-    return GetTickCount();
-
+    #ifdef WIN64
+        return GetTickCount();
+    #else
+        struct timeval time_value;
+        gettimeofday(&time_value, NULL);
+        return time_value.tv_sec * 1000 + time_value.tv_usec / 1000;
+    #endif
 }
 
 /*
@@ -2637,40 +2639,40 @@ void parse_go(const char* command)
     char* argument = NULL;
 
     // infinite search
-    if ((argument == strstr(command, "infinite"))) {}
+    if ((argument = strstr(command, "infinite"))) {}
 
     // match UCI "binc" command
-    if ((argument == strstr(command, "binc")) && side == black)
+    if ((argument = strstr(command, "binc")) && side == black)
         // parse black time increment
         inc = atoi(argument + 5);
 
     // match UCI "winc" command
-    if ((argument == strstr(command, "winc")) && side == white)
+    if ((argument = strstr(command, "winc")) && side == white)
         // parse white time increment
         inc = atoi(argument + 5);
 
     // match UCI "wtime" command
-    if ((argument == strstr(command, "wtime")) && side == white)
+    if ((argument = strstr(command, "wtime")) && side == white)
         // parse white time limit
         time = atoi(argument + 6);
 
     // match UCI "btime" command
-    if ((argument == strstr(command, "btime")) && side == black)
+    if ((argument = strstr(command, "btime")) && side == black)
         // parse black time limit
         time = atoi(argument + 6);
 
     // match UCI "movestogo" command
-    if ((argument == strstr(command, "movestogo")))
+    if ((argument = strstr(command, "movestogo")))
         // parse number of moves to go
         movestogo = atoi(argument + 10);
 
     // match UCI "movetime" command
-    if ((argument == strstr(command, "movetime")))
+    if ((argument = strstr(command, "movetime")))
         // parse amount of time allowed to spend to make a move
         movetime = atoi(argument + 9);
 
     // match UCI "depth" command
-    if ((argument == strstr(command, "depth")))
+    if ((argument = strstr(command, "depth")))
         // parse search depth
         depth = atoi(argument + 6);
 
@@ -2742,10 +2744,10 @@ void uci_loop()
         if (!fgets(input, 2000, stdin))
             continue;
         //Anders check dat het niet begint met een nieuwe regel.
-        else if (input[0] == '\n')
+        if (input[0] == '\n')
             continue;
         //Anders als isready, dan print readyok.
-        else if (strncmp(input, "isready", 7) == 0)
+        if (strncmp(input, "isready", 7) == 0)
         {
             //Print ready ok met een nieuwe regel.
             printf("readyok\n");
@@ -2884,4 +2886,3 @@ int main()
 
     return 0;
 }
-
