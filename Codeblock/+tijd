@@ -2556,8 +2556,8 @@ int parse_move(char *move_string)
                 if (move_string[4] == 'q' || move_string[4] == 'r' || move_string[4] == 'b' || move_string[4] == 'n')
                     //Return legal move.
                     return move;
-                //Return illegal move.
-                return 0;
+                //Return illegal move. (aangepastt)
+                continue;
             }
             //Return legal move. (in tutorial "return 1" vid 44)
             return move;
