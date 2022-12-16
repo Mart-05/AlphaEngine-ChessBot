@@ -2505,7 +2505,7 @@ void search_position(int depth)
 
 
         //Print belangrijke info.
-        printf("info score cp %d depth %d nodes %ld time %d pv ", score, depth, nodes, get_time_ms() - starttime);
+        printf("info score cp %d depth %d nodes %ld time %d pv ", score, current, nodes, get_time_ms() - starttime);
         for (int count = 0; count < pv_length[0]; count++)
         {
             print_move(pv_table[0][count]);
