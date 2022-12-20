@@ -1308,8 +1308,10 @@ void print_move_list(moves* move_list)
             get_move_enpassant(move) ? 1 : 0,
             get_move_castling(move) ? 1 : 0);
     }
-    // Total number of moves
-    printf("\n\n  Total movecount: %d\n\n", move_list->count);
+
+    //Print aantal zetten
+    printf("\n\n     Total number of moves: %d\n\n", move_list->count);
+
 }
 
 #define copy_board()                                                        \
@@ -1318,11 +1320,13 @@ void print_move_list(moves* move_list)
     memcpy(bitboards_copy, bitboards, 96);                                  \
     memcpy(occupancies_copy, occupancies, 24);                              \
     side_copy = side, enpassant_copy = enpassant, castle_copy = castle;     \
+    U64 hash_key_copy = hash_key;                                           \
 
 #define take_back()                                                         \
     memcpy(bitboards, bitboards_copy, 96);                                  \
     memcpy(occupancies, occupancies_copy, 24);                              \
     side = side_copy, enpassant = enpassant_copy, castle = castle_copy;     \
+    hash_key = hash_key_copy                                                \
 
 
 /**************
@@ -1413,10 +1417,15 @@ static inline int make_move(int move, int move_flag)
         int enpass = get_move_enpassant(move);
         int castling = get_move_castling(move);
 
+        //Verzet een stuk
         //Maak een bit een 0.
         pop_bit(bitboards[piece], source_square);
         //Maak een bit een 1.
         set_bit(bitboards[piece], target_square);
+
+        //Hash piece (remove piece from source square and move to target square)
+        hash_key ^= piece_keys[piece][source_square];
+        hash_key ^= piece_keys[piece][target_square];
 
         //Als iets geslagen wordt.
         if (capture)
@@ -1445,6 +1454,9 @@ static inline int make_move(int move, int move_flag)
                 {
                     //Verwijder bit (slaan).
                     pop_bit(bitboards[bb_piece], target_square);
+
+                    //Remove the piece from hash key
+                    hash_key ^= piece_keys[bb_piece][target_square];
                     break;
                 }
             }
@@ -1454,8 +1466,32 @@ static inline int make_move(int move, int move_flag)
         {
             //Verwijder pion als wit dan P, als zwart dan p.
             pop_bit(bitboards[(side == white) ? P : p], target_square);
+
+            //Als wit aan zet
+            if(side == white)
+            {
+                //Verwijder pion
+                pop_bit(bitboards[P], target_square);
+
+                //Verwijder pion van hash key
+                hash_key ^= piece_keys[P][target_square];
+            }
+
+            //Als zwart aan zet
+            else
+            {
+                //Verwijder pion
+                pop_bit(bitboards[p], target_square);
+
+                //Verwijder pion van hash key
+                hash_key ^= piece_keys[p][target_square];
+            }
+
             //Zet een nieuw stuk neer (meestal koningin, het promoted piece).
             set_bit(bitboards[promoted], target_square);
+
+            //Voeg de promoted_piece toe aan de hash key
+            hash_key ^= piece_keys[promoted][target_square];
         }
         //Als enpassant.
         if (enpass)
@@ -1465,7 +1501,30 @@ static inline int make_move(int move, int move_flag)
                 pop_bit(bitboards[p], target_square + 8) :
                 //Als zwart, popbit -8.
                 pop_bit(bitboards[P], target_square - 8);
+
+                //Wit aan zet
+                if (side==white)
+                {
+                    //Verwijder captured pawn
+                    pop_bit(bitboards[p], target_square + 8);
+
+                    //Verwijder pion van hash key
+                    hash_key ^= piece_keys[p][target_square + 8];
+                }
+
+                //Zwart aan zet
+                else
+                {
+                    //Verwijder captured pawn
+                    pop_bit(bitboards[P], target_square - 8);
+
+                    //Verwijder pion van hash key
+                    hash_key ^= piece_keys[P][target_square - 8];
+                }
         }
+
+        //hash enpassant (verwijder enpassant square van hash key)
+        if (enpassant != no_sq) hash_key ^= enpassant_keys[enpassant];
 
         //Zet enpassant naar niks want na een double pawn push wordt het een vakje en een zet verder kan dat niet meer.
         enpassant = no_sq;
@@ -1473,11 +1532,31 @@ static inline int make_move(int move, int move_flag)
         //Double pawn push.
         if (double_push)
         {
-            (side == white) ?
+                /*(side == white) ?
                 //Als wit aan zet is, dan enpassant vakje +8.
                 (enpassant = target_square + 8) :
                 //Als zwart aan zet is, dan enpassant vakje -8.
-                (enpassant = target_square - 8);
+                (enpassant = target_square - 8);*/
+
+                //Wit aan zet
+                if (side==white)
+                {
+                    //Set enpassent square
+                    enpassant = target_square + 8;
+
+                    //hash enpassent
+                    hash_key ^= enpassant_keys[target_square + 8];
+                }
+
+                //Zwart aan zet
+                else
+                {
+                    //Set enpassent square
+                    enpassant = target_square - 8;
+
+                    //hash enpassent
+                    hash_key ^= enpassant_keys[target_square - 8];
+                }
         }
         //Castling
         if (castling)
@@ -1490,31 +1569,53 @@ static inline int make_move(int move, int move_flag)
                 //Verwijder toren op h1 en zet op f1
                 pop_bit(bitboards[R], h1);
                 set_bit(bitboards[R], f1);
+
+                //Hash rook
+                hash_key ^= piece_keys[R][h1];
+                hash_key ^= piece_keys[R][f1];
                 break;
                 //Als target_square = c1.
             case (c1):
                 //Verwijder toren op a1 en zet op d1
                 pop_bit(bitboards[R], a1);
                 set_bit(bitboards[R], d1);
+
+                //Hash rook
+                hash_key ^= piece_keys[R][a1];
+                hash_key ^= piece_keys[R][d1];
                 break;
                 //Als target_square = g8.
             case (g8):
                 //Verwijder toren op h8 en zet op f8
                 pop_bit(bitboards[r], h8);
                 set_bit(bitboards[r], f8);
+
+                //Hash rook
+                hash_key ^= piece_keys[R][h8];
+                hash_key ^= piece_keys[R][f8];
                 break;
                 //Als target_square = c8.
             case (c8):
                 //Verwijder toren op a8 en zet op d8
                 pop_bit(bitboards[r], a8);
                 set_bit(bitboards[r], d8);
+
+                //Hash rook
+                hash_key ^= piece_keys[R][a8];
+                hash_key ^= piece_keys[R][d8];
                 break;
             }
         }
 
+        //Hash castling
+        hash_key ^= castle_keys[castle];
+
         //Castle mag alleen als toren en koning nog niet hebben bewogen.
         castle &= castling_rights[source_square];
         castle &= castling_rights[target_square];
+
+        //Hash castling
+        hash_key ^= castle_keys[castle];
 
         //Copy occupancies.
         memset(occupancies, 0ULL, 24);
@@ -1528,6 +1629,25 @@ static inline int make_move(int move, int move_flag)
 
         //Switch side
         side ^= 1;
+
+        //Side switched dus ook hash switched
+        hash_key ^= side_key;
+
+        // ===== debug hash key incremental update ===== //
+
+        //Maak een hask key voor updated positie
+        U64 hash_from_scratch = generate_hash_key();
+
+        //Als de hash key niet overeenkomt met een incrementaly updated hask key, dan stop even.
+        if (hash_key != hash_from_scratch)
+        {
+            //voor debuggen
+            printf("\n\nMake move\n");
+            printf("move: "); print_move(move);
+            print_board();
+            printf("hash key should be: %llx\n", hash_from_scratch);
+            getchar();
+        }
 
         //Als koning wordt aangevallen door andere kleur.
         if (is_square_attacked((side == white) ? get_ls1b_index(bitboards[k]) : get_ls1b_index(bitboards[K]), side))
@@ -2914,6 +3034,23 @@ static inline void perft_driver(int depth)
 
         //Take back.
         take_back();
+
+
+        // ===== debug hash key incremental update ===== //
+
+        //Maak een hask key voor updated positie
+        U64 hash_from_scratch = generate_hash_key();
+
+        //Als de hash key niet overeenkomt met een incrementaly updated hask key, dan stop even.
+        if (hash_key != hash_from_scratch)
+        {
+            //voor debuggen
+            printf("\n\nTake Back\n");
+            printf("move: "); print_move(move_list->moves[move_count]);
+            print_board();
+            printf("hash key should be: %llx\n", hash_from_scratch);
+            getchar();
+        }
     }
 }
 //Perft test (performance test zoals aantal nodes per depth).
