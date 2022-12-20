@@ -435,6 +435,7 @@ U64 generate_hash_key()
 
     //return deze hash_key
     return final_key;
+}
 
 /**************
 
@@ -610,9 +611,6 @@ void parse_fen(const char* fen)
     hash_key = generate_hash_key();
 }
 
-
-
-}
 /**************
 
 ATTACKS
