@@ -2280,6 +2280,9 @@ Transposition table
 //hash table size
 #define hash_size 0x400000
 
+//no hash entry found constant
+#define no_hash_entry 100000
+
 //transposition table hash flags
 #define   hash_flag_exact   0
 #define    hash_flag_alpha   1
@@ -2309,6 +2312,49 @@ void clear_hash_table()
         hash_table[index].flag = 0;
         hash_table[index].score = 0;
      }
+}
+
+//Lees de hash entry data
+static inline int read_hash_entry(int alpha, int beta, int depth)
+{
+    //Create a TT instance pointer naar de entry voor het opslaan
+    tt *hash_entry = &hash_table[hash_key % hash_size];
+
+    //Zeker weten dat de precieze positie wordt gepakt
+    if (hash_entry->hash_key == hash_key)
+    {
+        //Zelfde depth
+        if (hash_entry->depth >= depth)
+        {
+            //Match pv node score
+            if (hash_entry->flag == hash_flag_exact)
+                //Return exact pv node score
+                return hash_entry->score;
+
+            //Match alpha, fail low node score
+            if ((hash_entry->flag == hash_flag_alpha) && (hash_entry->score <= alpha))
+                //Return exact pv node score
+                return alpha;
+
+            //Match beta, fail high node score
+            if ((hash_entry->flag == hash_flag_beta) && (hash_entry->score >= beta))
+                //Return exact pv node score
+                return beta;
+        }
+    }
+}
+
+//Schrijf de hash entry data
+static inline void write_hash_entry(int score, int depth, int hash_flag)
+{
+    //Create a TT instance pointer naar de entry voor het opslaan
+    tt *hash_entry = &hash_table[hash_key % hash_size];
+
+    //Schrijf de hash entry data
+    hash_entry->hash_key = hash_key;
+    hash_entry->score = score;
+    hash_entry->flag = hash_flag;
+    hash_entry->depth = depth;
 }
 
 // enable PV scoring
