@@ -101,12 +101,13 @@ int castle;
 U64 hash_key;
 
 //Repetition table voor repetitions/draw herkennen
-U64 repetition_table[150];
+U64 repetition_table[1000];
 
 //Repetition index
 int repetition_index;
 
-
+//Half move counter
+int ply;
 /**************
 
 Time control variabelen
@@ -533,11 +534,19 @@ void parse_fen(const char* fen)
     memset(bitboards, 0ULL, sizeof(bitboards));
     //Reset occupancies
     memset(occupancies, 0ULL, sizeof(occupancies));
+
     //Reset game states/variables.
     side = 0;
     enpassant = no_sq;
     castle = 0;
 
+    //Reset repetitie index
+    repetition_index = 0;
+    //Reset repetition table
+    memset(repetition_table, 0ULL, sizeof(repetition_table));
+    //Reset ply
+    ply = 0;
+    
     //Loop over elk vakje en teken in de fen dat geen spatie is.
     for (int square = 0; square < 64 && *fen && *fen != ' ';)
     {
@@ -2536,7 +2545,7 @@ static inline int quiescence(int alpha, int beta)
         communicate();
     // verhoog node count
     nodes++;
-        
+
     // zorgt ervoor dat engine niet crash (ofwel niet overflowt)
     if (ply > MAX_PLY - 1)
         return evaluate();
@@ -2631,12 +2640,12 @@ static inline int negamax(int alpha, int beta, int depth)
 
     //define hash flag
     int hash_flag = hash_flag_alpha;
-    
+
     //Als repetitie
     if (ply && is_repetition())
         //Geef gelijkspel score
         return 0;
-            
+
     //Hack om erachter te komen of de node pv is of niet
     int pv_node = beta - alpha > 1;
 
@@ -3032,6 +3041,11 @@ void parse_position(const char* command)
             if (move == 0)
                 //Stop de loop.
                 break;
+
+            //Verhoog repetition index
+            repetition_index++;
+            //Schrijf hash key in repetition table
+            repetition_table[repetition_index] = hash_key;
 
             //Doe de zetten.
             make_move(move, all_moves);
