@@ -3120,7 +3120,7 @@ void uci_loop()
  ==================================
 \**********************************/
 
-// init all variables
+// init all variables soort van opvragen zodat de computer ze herinnert
 void init_all()
 {
     // init leaper pieces attacks
@@ -3148,36 +3148,35 @@ void init_all()
 
  ==================================
 \**********************************/
-
+//Main loop
 int main()
 {
-    // init all
+    //Init all
     init_all();
 
-    // debug mode variable
+    //Debug mode variable, 0 is uit en 1 is aan
     int debug = 0;
 
-    // if debugging
+    //Als debuggen aan staat, dan...
     if (debug)
     {
-        // parse fen
-        //parse_fen("4k3/Q7/8/4K3/8/8/8/8 w - - ");
+        //Parse start pos
         parse_fen(start_position);
+        //Print het spelbord
         print_board();
+        //Zoek de positie 10 zetten diep
         search_position(10);
-
+    
+        //Maak de beste zet
         make_move(pv_table[0][0], all_moves);
 
+        //Zoek opnieuw
         search_position(10);
-
-
-        // info score cp 20 depth 7 nodes 56762 pv b1c3 d7d5 d2d4 b8c6 g1f3 g8f6 c1f4
-        // info score cp 20 depth 7 nodes 56762 pv b1c3 d7d5 d2d4 b8c6 g1f3 g8f6 c1f4
-        // info score cp 20 depth 7 nodes 29391 pv g1f3 d7d5 d2d4 b8c6 b1c3 g8f6 c1f4
     }
 
+    //Als debug uit staat, dan..
     else
-        // connect to the GUI
+        //UCI loop voor het echte spelen
         uci_loop();
 
     return 0;
