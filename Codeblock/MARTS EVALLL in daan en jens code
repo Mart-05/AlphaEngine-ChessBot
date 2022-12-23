@@ -1,5 +1,4 @@
-
-    #include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -8,7 +7,6 @@
 #else
     # include <sys/time.h>
 #endif
-
 
 /**************
 
@@ -27,7 +25,7 @@ MACROS
 #define tricky_position "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 "
 #define killer_position "rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1"
 #define dumb_ai "1rq2b1N/p1p1k1p1/7p/3Qn3/3P4/P7/1PP2PPP/R1B1R1K1 w - - 3 20 "
-#define repetitions "2r3k1/R7/8/1R6/8/8/P4KPP/8 w - - 0 40 "
+
 
 
 /**************
@@ -58,7 +56,7 @@ enum { wk = 1, wq = 2, bk = 4, bq = 8 };
 enum { P, N, B, R, Q, K, p, n, b, r, q, k };
 
 //Vakje naar coördinaten: voor vertaling van computertaal naar mensentaal.
-char* square_to_coordinates[] = {
+const char* square_to_coordinates[] = {
     "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
     "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
     "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
@@ -98,17 +96,7 @@ int side;
 int enpassant = no_sq;
 int castle;
 
-// pseudo random position identifiers (naast collisions)
-U64 hash_key;
 
-//Repetition table voor repetitions/draw herkennen
-U64 repetition_table[1000];
-
-//Repetition index
-int repetition_index;
-
-//Half move counter
-int ply;
 /**************
 
 Time control variabelen
@@ -359,93 +347,7 @@ static inline int get_ls1b_index(U64 bitboard)
     //Als bitboard = 0.
     else return -1;
 }
-/**************
 
-ZOBRIST
-
-***************/
-// random piece keys [soort stuk][positie(vakjes)]
-U64 piece_keys[12][64];
-
-//random enpassant keys [positie(vakjes)]
-U64 enpassant_keys[64];
-
-//Random castling keys
-U64 castle_keys[16];
-
-//random side key
-U64 side_key;
-
-//init de random hask keys
-void init_random_keys()
-{
-    //update pseudo random number state
-    state = 1804289383;
-
-    //loop over piece codes
-    for (int piece = P; piece <= k; piece++)
-    {
-        // loop over board squares
-        for (int square = 0; square < 64; square++)
-        //init random piece keys
-        piece_keys[piece][square] = get_random_U64_number();
-
-    }
-    // loop over board squares
-    for (int square = 0; square < 64; square++)
-        //init random enpassant keys
-        enpassant_keys[square] = get_random_U64_number();
-
-    //init random side key
-    side_key = get_random_U64_number();
-
-    //loop over castling keys
-    for (int index = 0; index < 16; index++)
-        //init castle keys
-        castle_keys[index] = get_random_U64_number();
-}
-//generate pseudorandom position identifier (hash key) From scratch
-U64 generate_hash_key()
-{
-    //final hash key
-    U64 final_key = 0ULL;
-
-    // bitboard copy
-    U64 bitboard;
-
-    //loop over piece bit boards
-    for (int piece = P; piece <= k; piece++)
-    {
-        //init piece bitboard copy
-        bitboard = bitboards[piece];
-
-        //loop over pieces binnen bitbaord
-        while (bitboard)
-        {
-            //init square occupied by piece
-            int square = get_ls1b_index(bitboard);
-
-            //hash piece (add piece to key)
-            final_key ^= piece_keys[piece][square];
-
-            //pop ls1b
-            pop_bit(bitboard,square);
-        }
-    }
-    //if enpassant square is op bord
-    if (enpassant != no_sq)
-        //hash enpassant
-        final_key ^= enpassant_keys[enpassant];
-
-    //hash castling rights
-    final_key ^= castle_keys[castle];
-
-    //hash the side only if black een zet moet doen
-    if (side == black) final_key ^= side_key;
-
-    //return deze hash_key
-    return final_key;
-}
 
 /**************
 
@@ -529,69 +431,47 @@ void print_board()
 }
 
 //Fen naar board.
-void parse_fen(char* fen)
+void parse_fen(const char* fen)
 {
     //Reset bitboard naar alles 0.
     memset(bitboards, 0ULL, sizeof(bitboards));
     //Reset occupancies
     memset(occupancies, 0ULL, sizeof(occupancies));
-
     //Reset game states/variables.
     side = 0;
     enpassant = no_sq;
     castle = 0;
 
-    //Reset repetitie index
-    repetition_index = 0;
-    //Reset repetition table
-    memset(repetition_table, 0ULL, sizeof(repetition_table));
-   printf("ply: %d\n", ply);
-    // loop over board ranks
-    for (int rank = 0; rank < 8; rank++)
+    //Loop over elk vakje en teken in de fen dat geen spatie is.
+    for (int square = 0; square < 64 && *fen && *fen != ' ';)
     {
-        // loop over board files
-        for (int file = 0; file < 8; file++)
+        //Als een stuk, dan...
+        if ((*fen >= 'b' && *fen <= 'r') || (*fen >= 'B' && *fen <= 'R'))
         {
-            // init current square
-            int square = rank * 8 + file;
-            // match ascii pieces within FEN string
-            if ((*fen >= 'a' && *fen <= 'z') || (*fen >= 'A' && *fen <= 'Z'))
-            {
-                // init piece type
-                int piece = char_pieces[*fen];
-                // set piece on corresponding bitboard
-                set_bit(bitboards[piece], square);
-                // increment pointer to FEN string
-                fen++;
-            }
-            // match empty square numbers within FEN string
-            if (*fen >= '0' && *fen <= '9')
-            {
-                // init offset (convert char 0 to int 0)
-                int offset = *fen - '0';
-                // define piece variable
-                int piece = -1;
-                // loop over all piece bitboards
-                for (int bb_piece = P; bb_piece <= k; bb_piece++)
-                {
-                    // if there is a piece on current square
-                    if (get_bit(bitboards[bb_piece], square))
-                        // get piece code
-                        piece = bb_piece;
-                }
-                // on empty current square
-                if (piece == -1)
-                    // decrement file
-                    file--;
-                // adjust file counter
-                file += offset;
-                // increment pointer to FEN string
-                fen++;
-            }
-            // match rank separator
-            if (*fen == '/')
-                // increment pointer to FEN string
-                fen++;
+            //Kijken welk stuk (decoden).
+            int piece = char_pieces[*fen];
+            //Zet een bit op het goede bitboard van dat stuk op de goede plek.
+            set_bit(bitboards[piece], square);
+            //Volgende vakje.
+            square++;
+            //Volgende teken in fen.
+            fen++;
+        }
+        //Anders als er een cijfer staat:
+        else if (*fen >= '1' && *fen <= '8')
+        {
+            //Stel offset gelijk aan cijfer dat in de fen staat.
+            int offset = *fen - '0';
+            //Ga het aantal offset vakjes verder.
+            square += offset;
+            //Volgende teken in fen.
+            fen++;
+        }
+        //Alle overigen:
+        else
+        {
+            //Volgende teken in fen.
+            fen++;
         }
     }
 
@@ -638,10 +518,8 @@ void parse_fen(char* fen)
     //Occupancies voor beide.
     occupancies[both] |= occupancies[white];
     occupancies[both] |= occupancies[black];
-
-    //init hash key
-    hash_key = generate_hash_key();
 }
+
 
 /**************
 
@@ -1226,27 +1104,10 @@ static inline U64 get_rook_attacks(int square, U64 occupancy)
 //Koningin attacks krijgen. Dit zijn nu echt de bits die de toren aanvalt.
 static inline U64 get_queen_attacks(int square, U64 occupancy)
 {
-    // init result attacks bitboard
-    U64 queen_attacks = 0ULL;
-    // init bishop occupancies
-    U64 bishop_occupancy = occupancy;
-    // init rook occupancies
-    U64 rook_occupancy = occupancy;
-    // get bishop attacks assuming current board occupancy
-    bishop_occupancy &= bishop_masks[square];
-    bishop_occupancy *= bishop_magic_numbers[square];
-    bishop_occupancy >>= 64 - bishop_relevant_bits[square];
-    // get bishop attacks
-    queen_attacks = bishop_attacks[square][bishop_occupancy];
-    // get rook attacks assuming current board occupancy
-    rook_occupancy &= rook_masks[square];
-    rook_occupancy *= rook_magic_numbers[square];
-    rook_occupancy >>= 64 - rook_relevant_bits[square];
-    // get rook attacks
-    queen_attacks |= rook_attacks[square][rook_occupancy];
-    // return queen attacks
-    return queen_attacks;
+    //Krijg toren en bishop attacks want koningin kan wat een toren en bishop kan.
+    return (get_bishop_attacks(square, occupancy) | get_rook_attacks(square, occupancy));
 }
+
 
 /**************
 
@@ -1346,8 +1207,6 @@ void print_move_list(moves* move_list)
     {
         //init move
         int move = move_list->moves[move_count];
-
-        #ifdef WIN64
         //print move
         printf("  %s%s%c   %c       %d         %d         %d         %d\n",
             square_to_coordinates[get_move_source(move)],
@@ -1358,22 +1217,9 @@ void print_move_list(moves* move_list)
             get_move_double(move) ? 1 : 0,
             get_move_enpassant(move) ? 1 : 0,
             get_move_castling(move) ? 1 : 0);
-             #else
-            // print move
-            printf("     %s%s%c   %s         %d         %d         %d         %d\n", square_to_coordinates[get_move_source(move)],
-                                                                                  square_to_coordinates[get_move_target(move)],
-                                                                                  get_move_promoted(move) ? promoted_pieces[get_move_promoted(move)] : ' ',
-                                                                                  unicode_pieces[get_move_piece(move)],
-                                                                                  get_move_capture(move) ? 1 : 0,
-                                                                                  get_move_double(move) ? 1 : 0,
-                                                                                  get_move_enpassant(move) ? 1 : 0,
-                                                                                  get_move_castling(move) ? 1 : 0);
-        #endif
     }
-
-    //Print aantal zetten
-    printf("\n\n     Total number of moves: %d\n\n", move_list->count);
-
+    // Total number of moves
+    printf("\n\n  Total movecount: %d\n\n", move_list->count);
 }
 
 #define copy_board()                                                        \
@@ -1382,13 +1228,11 @@ void print_move_list(moves* move_list)
     memcpy(bitboards_copy, bitboards, 96);                                  \
     memcpy(occupancies_copy, occupancies, 24);                              \
     side_copy = side, enpassant_copy = enpassant, castle_copy = castle;     \
-    U64 hash_key_copy = hash_key;                                           \
 
 #define take_back()                                                         \
     memcpy(bitboards, bitboards_copy, 96);                                  \
     memcpy(occupancies, occupancies_copy, 24);                              \
     side = side_copy, enpassant = enpassant_copy, castle = castle_copy;     \
-    hash_key = hash_key_copy                                                \
 
 
 /**************
@@ -1479,15 +1323,10 @@ static inline int make_move(int move, int move_flag)
         int enpass = get_move_enpassant(move);
         int castling = get_move_castling(move);
 
-        //Verzet een stuk
         //Maak een bit een 0.
         pop_bit(bitboards[piece], source_square);
         //Maak een bit een 1.
         set_bit(bitboards[piece], target_square);
-
-        //Hash piece (remove piece from source square and move to target square)
-        hash_key ^= piece_keys[piece][source_square];
-        hash_key ^= piece_keys[piece][target_square];
 
         //Als iets geslagen wordt.
         if (capture)
@@ -1516,9 +1355,6 @@ static inline int make_move(int move, int move_flag)
                 {
                     //Verwijder bit (slaan).
                     pop_bit(bitboards[bb_piece], target_square);
-
-                    //Remove the piece from hash key
-                    hash_key ^= piece_keys[bb_piece][target_square];
                     break;
                 }
             }
@@ -1528,32 +1364,8 @@ static inline int make_move(int move, int move_flag)
         {
             //Verwijder pion als wit dan P, als zwart dan p.
             pop_bit(bitboards[(side == white) ? P : p], target_square);
-
-            //Als wit aan zet
-            if(side == white)
-            {
-                //Verwijder pion
-                pop_bit(bitboards[P], target_square);
-
-                //Verwijder pion van hash key
-                hash_key ^= piece_keys[P][target_square];
-            }
-
-            //Als zwart aan zet
-            else
-            {
-                //Verwijder pion
-                pop_bit(bitboards[p], target_square);
-
-                //Verwijder pion van hash key
-                hash_key ^= piece_keys[p][target_square];
-            }
-
             //Zet een nieuw stuk neer (meestal koningin, het promoted piece).
             set_bit(bitboards[promoted], target_square);
-
-            //Voeg de promoted_piece toe aan de hash key
-            hash_key ^= piece_keys[promoted][target_square];
         }
         //Als enpassant.
         if (enpass)
@@ -1563,30 +1375,7 @@ static inline int make_move(int move, int move_flag)
                 pop_bit(bitboards[p], target_square + 8) :
                 //Als zwart, popbit -8.
                 pop_bit(bitboards[P], target_square - 8);
-
-                //Wit aan zet
-                if (side==white)
-                {
-                    //Verwijder captured pawn
-                    pop_bit(bitboards[p], target_square + 8);
-
-                    //Verwijder pion van hash key
-                    hash_key ^= piece_keys[p][target_square + 8];
-                }
-
-                //Zwart aan zet
-                else
-                {
-                    //Verwijder captured pawn
-                    pop_bit(bitboards[P], target_square - 8);
-
-                    //Verwijder pion van hash key
-                    hash_key ^= piece_keys[P][target_square - 8];
-                }
         }
-
-        //hash enpassant (verwijder enpassant square van hash key)
-        if (enpassant != no_sq) hash_key ^= enpassant_keys[enpassant];
 
         //Zet enpassant naar niks want na een double pawn push wordt het een vakje en een zet verder kan dat niet meer.
         enpassant = no_sq;
@@ -1594,31 +1383,11 @@ static inline int make_move(int move, int move_flag)
         //Double pawn push.
         if (double_push)
         {
-                /*(side == white) ?
+            (side == white) ?
                 //Als wit aan zet is, dan enpassant vakje +8.
-                (enpassant = target_square + 8) :
+                (enpassant = target_square + 8):
                 //Als zwart aan zet is, dan enpassant vakje -8.
-                (enpassant = target_square - 8);*/
-
-                //Wit aan zet
-                if (side==white)
-                {
-                    //Set enpassent square
-                    enpassant = target_square + 8;
-
-                    //hash enpassent
-                    hash_key ^= enpassant_keys[target_square + 8];
-                }
-
-                //Zwart aan zet
-                else
-                {
-                    //Set enpassent square
-                    enpassant = target_square - 8;
-
-                    //hash enpassent
-                    hash_key ^= enpassant_keys[target_square - 8];
-                }
+                (enpassant = target_square - 8);
         }
         //Castling
         if (castling)
@@ -1631,53 +1400,31 @@ static inline int make_move(int move, int move_flag)
                 //Verwijder toren op h1 en zet op f1
                 pop_bit(bitboards[R], h1);
                 set_bit(bitboards[R], f1);
-
-                //Hash rook
-                hash_key ^= piece_keys[R][h1];
-                hash_key ^= piece_keys[R][f1];
                 break;
                 //Als target_square = c1.
             case (c1):
                 //Verwijder toren op a1 en zet op d1
                 pop_bit(bitboards[R], a1);
                 set_bit(bitboards[R], d1);
-
-                //Hash rook
-                hash_key ^= piece_keys[R][a1];
-                hash_key ^= piece_keys[R][d1];
                 break;
                 //Als target_square = g8.
             case (g8):
                 //Verwijder toren op h8 en zet op f8
                 pop_bit(bitboards[r], h8);
                 set_bit(bitboards[r], f8);
-
-                //Hash rook
-                hash_key ^= piece_keys[r][h8];
-                hash_key ^= piece_keys[r][f8];
                 break;
                 //Als target_square = c8.
             case (c8):
                 //Verwijder toren op a8 en zet op d8
                 pop_bit(bitboards[r], a8);
                 set_bit(bitboards[r], d8);
-
-                //Hash rook
-                hash_key ^= piece_keys[r][a8];
-                hash_key ^= piece_keys[r][d8];
                 break;
             }
         }
 
-        //Hash castling
-        hash_key ^= castle_keys[castle];
-
         //Castle mag alleen als toren en koning nog niet hebben bewogen.
         castle &= castling_rights[source_square];
         castle &= castling_rights[target_square];
-
-        //Hash castling
-        hash_key ^= castle_keys[castle];
 
         //Copy occupancies.
         memset(occupancies, 0ULL, 24);
@@ -1691,25 +1438,6 @@ static inline int make_move(int move, int move_flag)
 
         //Switch side
         side ^= 1;
-
-        //Side switched dus ook hash switched
-        hash_key ^= side_key;
-
-        // ===== debug hash key incremental update ===== //
-
-        //Maak een hask key voor updated positie
-        /*U64 hash_from_scratch = generate_hash_key();
-
-        //Als de hash key niet overeenkomt met een incrementaly updated hask key, dan stop even.
-        if (hash_key != hash_from_scratch)
-        {
-            //voor debuggen
-            printf("\n\nMake move\n");
-            printf("move: "); print_move(move);
-            print_board();
-            printf("hash key should be: %llx\n", hash_from_scratch);
-            getchar();
-        }*/
 
         //Als koning wordt aangevallen door andere kleur.
         if (is_square_attacked((side == white) ? get_ls1b_index(bitboards[k]) : get_ls1b_index(bitboards[K]), side))
@@ -1792,12 +1520,16 @@ static inline void generate_moves(moves* move_list)
                     //Als de pion iets aanvalt
                     while (attacks)
                     {
+
+
                         //Waar een pion naartoe kan.
                         target_square = get_ls1b_index(attacks);
 
                         //Als pion op laatste rij, dan promotie.
                         if (source_square >= a7 && source_square <= h7)
                         {
+
+
                             //Voeg de zet toe aan de mogelijke zetten (Aanval+promotie).
                             add_move(move_list, encode_move(source_square, target_square, piece, Q, 1, 0, 0, 0));
                             add_move(move_list, encode_move(source_square, target_square, piece, R, 1, 0, 0, 0));
@@ -2029,7 +1761,7 @@ static inline void generate_moves(moves* move_list)
                 //Bepaal waar de eerste loper staat van linksboven naar rechtsonder.
                 source_square = get_ls1b_index(bitboard);
                 //Attacks van loper is waar een loper naartoe kan bewegen, hierbij wordt rekening gehouden met zetten waarbij de loper op een stuk van zijn eigen kleur komt.
-                attacks = get_bishop_attacks(source_square, occupancies[both]) & ((side == white) ? ~occupancies[white] : ~occupancies[black]);
+                attacks = get_bishop_attacks(source_square, occupancies[both]) & ~occupancies[side];
 
                 //Zolang er attacks bits (of target_squares) zijn.
                 while (attacks)
@@ -2146,98 +1878,27 @@ static inline void generate_moves(moves* move_list)
         }
     }
 }
-/**********************************\
- ==================================
-               Perft
- ==================================
-\**********************************/
-// leaf nodes (number of positions reached during the test of the move generator at a given depth)
-long nodes;
-// perft driver
-static inline void perft_driver(int depth)
-{
-    // reccursion escape condition
-    if (depth == 0)
-    {
-        // increment nodes count (count reached positions)
-        nodes++;
-        return;
-    }
-    // create move list instance
-    moves move_list[1];
-    // generate moves
-    generate_moves(move_list);
-        // loop over generated moves
-    for (int move_count = 0; move_count < move_list->count; move_count++)
-    {
-        // preserve board state
-        copy_board();
-        // make move
-        if (!make_move(move_list->moves[move_count], all_moves))
-            // skip to the next move
-            continue;
-        // call perft driver recursively
-        perft_driver(depth - 1);
-        // take back
-        take_back();
-        // build hash key for the updated position (after move is made) from scratch
-        /*U64 hash_from_scratch = generate_hash_key();
-        // in case if hash key built from scratch doesn't match
-        // the one that was incrementally updated we interrupt execution
-        if (hash_key != hash_from_scratch)
-        {
-            printf("\n\nTake back\n");
-            printf("move: "); print_move(move_list->moves[move_count]);
-            print_board();
-            printf("hash key should be: %llx\n", hash_from_scratch);
-            getchar();
-        }*/
-    }
-}
-// perft test
-void perft_test(int depth)
-{
-    printf("\n     Performance test\n\n");
-    // create move list instance
-    moves move_list[1];
-    // generate moves
-    generate_moves(move_list);
-    // init start time
-    long start = get_time_ms();
-    // loop over generated moves
-    for (int move_count = 0; move_count < move_list->count; move_count++)
-    {
-        // preserve board state
-        copy_board();
-        // make move
-        if (!make_move(move_list->moves[move_count], all_moves))
-            // skip to the next move
-            continue;
-        // cummulative nodes
-        long cummulative_nodes = nodes;
-        // call perft driver recursively
-        perft_driver(depth - 1);
-        // old nodes
-        long old_nodes = nodes - cummulative_nodes;
-        // take back
-        take_back();
-        // print move
-        printf("     move: %s%s%c  nodes: %ld\n", square_to_coordinates[get_move_source(move_list->moves[move_count])],
-                                                 square_to_coordinates[get_move_target(move_list->moves[move_count])],
-                                                 get_move_promoted(move_list->moves[move_count]) ? promoted_pieces[get_move_promoted(move_list->moves[move_count])] : ' ',
-                                                 old_nodes);
-    }
-    // print results
-    printf("\n    Depth: %d\n", depth);
-    printf("    Nodes: %ld\n", nodes);
-    printf("     Time: %ld\n\n", get_time_ms() - start);
-}
+
 
 /**************
 
 EVALUATION
 
 ***************/
+int material_score[12] = {
+    100,      // white pawn score
+    300,      // white knight scrore
+    350,      // white bishop score
+    500,      // white rook score
+   1000,      // white queen score
+  10000,      // white king score
+   -100,      // black pawn score
+   -300,      // black knight scrore
+   -350,      // black bishop score
+   -500,      // black rook score
+  -1000,      // black queen score
+ -10000,      // black king score
+};
 
 //Vakje van engines kant naar tegenstanders kant en andersom.
 const int mirror_score[128] =
@@ -2411,72 +2072,6 @@ static inline int evaluate()
     int qcount = 0;
     int kcount = 0;
 
-    /*for (int bb_piece = P; bb_piece <= k; bb_piece++)
-    {
-        // init bitboard piece copy
-        bitboard = bitboards[bb_piece];
-        //loop over pieces within a bitboard
-        while (bitboard)
-        {
-            //init piece
-            piece = bb_piece;
-            //Kies stuk.
-            switch (piece)
-            {
-                //Tel het aantal witte stukken per stuk.
-                case P:
-                    Pcount++;
-                    break;
-                case N:
-                    Ncount++;
-                    break;
-                case B:
-                    Bcount++;
-                    break;
-                case R:
-                    Rcount++;
-                    break;
-                case Q:
-                    Qcount++;
-                    break;
-                case K:
-                    Kcount++;
-                    break;
-
-                //Tel het aantal zwarte stukken per stuk
-                case p:
-                    pcount++;
-                    break;
-                case n:
-                    ncount++;
-                    break;
-                case b:
-                    bcount++;
-                    break;
-                case r:
-                    rcount++;
-                    break;
-                case q:
-                    qcount++;
-                    break;
-                case k:
-                    kcount++;
-                    break;
-            }
-
-            //Pop ls1b van kopie.
-            pop_bit(bitboard, square);
-        }
-    }*/
-    //Telt het aantal bits op het bitboard dat aan(1) staat.
-    //int Pcount = 0;
-    //while (bitboards[piece])
-    //{
-    //    Pcount++;
-    //    bitboards[piece] &= bitboards[piece] - 1;
-    //}
-    //return Pcount;
-
     //Define opening score en endgame score
     int opening_score = 0;
     int endgame_score = 0;
@@ -2494,7 +2089,7 @@ static inline int evaluate()
             //vakje moet gelijk zijn aan de ls1b index van het bitboard
             square = get_ls1b_index(bitboard);
             // score van de stukken is gelijk aan de material score
-            //score += material_score[piece];
+            score += material_score[piece];
 
             //Kies stuk.
             switch (piece)
@@ -2594,69 +2189,12 @@ static inline int evaluate()
     phase = (phase * 256 + (TotalPhase / 2)) / TotalPhase;
 
 
-    score = ((opening_score * (256 - phase)) + (endgame_score * phase)) / 256;
+    score += ((opening_score * (256 - phase)) + (endgame_score * phase)) / 256;
     //printf ("%d", score);
+    return (side == white) ? score : -score;
 
 
 }
-
-
-/*//position evaluation
-static inline int evaluate()
-{
-    //static evaluation score
-    int score = 0;
-    //current pieces bitboard copy
-    U64 bitboard;
-    // init piece & square
-    int piece, square;
-
-    // loop over piece bitboards
-    for (int bb_piece = P; bb_piece <= k; bb_piece++)
-    {
-        // init bitboard piece copy
-        bitboard = bitboards[bb_piece];
-        //loop over pieces within a bitboard
-        while (bitboard)
-        {
-            //init piece
-            piece = bb_piece;
-            //vakje moet gelijk zijn aan de ls1b index van het bitboard
-            square = get_ls1b_index(bitboard);
-            // score van de stukken is gelijk aan de material score
-            score += material_score[piece];
-
-            //Kies stuk.
-            switch (piece)
-            {
-                //Tel de positional score van wit per stuk erbij op.
-            case P: score += pawn_score[square]; break;
-            case N: score += knight_score[square]; break;
-            case B: score += bishop_score[square]; break;
-            case R: score += rook_score[square]; break;
-                //case Q: score += queen_score[square]; break;
-            case K: score += king_score[square]; break;
-
-                //Trek de positional score van wit per stuk ervanaf.
-            case p: score -= pawn_score[mirror_score[square]]; break;
-            case n: score -= knight_score[mirror_score[square]]; break;
-            case b: score -= bishop_score[mirror_score[square]]; break;
-            case r: score -= rook_score[mirror_score[square]]; break;
-                //case q: score -= queen_score[mirror_score[square]]; break;
-            case k: score -= king_score[mirror_score[square]]; break;
-            }
-            //Pop ls1b van kopie.
-            pop_bit(bitboard, square);
-        }
-    }
-    //Return final evaluation based on side (dus negatief voor zwart, positief voor wit).
-    return (side == white) ? score : -score;
-}*/
-//Bound voor mating scores
-#define infinity 50000
-#define mate_value 49000
-#define mate_score 48000
-
 //Most valuable victim - Least valuable attacker tabel.
 static int mvv_lva[12][12] = {
     105, 205, 305, 405, 505, 605,  105, 205, 305, 405, 505, 605,
@@ -2674,116 +2212,23 @@ static int mvv_lva[12][12] = {
     100, 200, 300, 400, 500, 600,  100, 200, 300, 400, 500, 600
 };
 // constante voor de max PLY in één search
-#define MAX_PLY 64
+const int MAX_PLY = 64;
 // killer moves [id][ply]
-int killer_moves[2][MAX_PLY];
+int killer_moves[2][64];
 
 // history moves [id][ply]
 int history_moves[12][64];
 
-int pv_length[MAX_PLY];
-int pv_table[MAX_PLY][MAX_PLY];
+int pv_length[64];
+int pv_table[64][64];
 
 int follow_pv, score_pv;
 
+//Leaf nodes, aantal posities die behaald zijn tijdens een test met de move generator bij een bepaalde depth.
+long nodes;
 
 //Half move dus een zet van een kant.
-
-
-/**************
-
-Transposition table
-
-***************/
-//hash table size
-#define hash_size 0x400000
-
-//no hash entry found constant
-#define no_hash_entry 100000
-
-//transposition table hash flags
-#define   hash_flag_exact   0
-#define    hash_flag_alpha   1
-#define    hash_flag_beta    2
-
-
-//transposition table structure
-typedef struct  {
-    U64 hash_key;
-    int depth;
-    int flag; //flag type of node (alpha cutoff/beta cutoff/PV)
-    int score; //(alpha/beta/PC)
-}   tt; //transposition table
-
-// define TT instance
-tt hash_table[hash_size];
-
-//clear hash table
-void clear_hash_table()
-{
-     //loop over tt elements
-     for (int index = 0; index < hash_size; index++)
-     {
-        //reset TT inner fields
-        hash_table[index].hash_key = 0;
-        hash_table[index].depth = 0;
-        hash_table[index].flag = 0;
-        hash_table[index].score = 0;
-     }
-}
-
-//Lees de hash entry data
-static inline int read_hash_entry(int alpha, int beta, int depth)
-{
-    //Create a TT instance pointer naar de entry voor het opslaan
-    tt *hash_entry = &hash_table[hash_key % hash_size];
-
-    //Zeker weten dat de precieze positie wordt gepakt
-    if (hash_entry->hash_key == hash_key)
-    {
-        //Zelfde depth
-        if (hash_entry->depth >= depth)
-        {
-
-            // get score form hash
-            int score = hash_entry->score;
-
-            if (score < -mate_score) score += ply;
-            if (score > mate_score) score -= ply;
-
-
-            //Match pv node score
-            if (hash_entry->flag == hash_flag_exact)
-                //Return exact pv node score
-                return score;
-
-            //Match alpha, fail low node score
-            if ((hash_entry->flag == hash_flag_alpha) && (score <= alpha))
-                //Return exact pv node score
-                return alpha;
-
-            //Match beta, fail high node score
-            if ((hash_entry->flag == hash_flag_beta) && (score >= beta))
-                //Return exact pv node score
-                return beta;
-        }
-    }
-    //Als de hash->entry niet bestaat
-    return no_hash_entry;
-}
-
-//Schrijf de hash entry data
-static inline void write_hash_entry(int score, int depth, int hash_flag)
-{
-    //Create a TT instance pointer naar de entry voor het opslaan
-    tt *hash_entry = &hash_table[hash_key % hash_size];
-
-    //Schrijf de hash entry data
-    hash_entry->hash_key = hash_key;
-    hash_entry->score = score;
-    hash_entry->flag = hash_flag;
-    hash_entry->depth = depth;
-}
+int ply;
 
 // enable PV scoring
 static inline void enable_pv_scoring(moves* move_list)
@@ -2804,11 +2249,10 @@ static inline void enable_pv_scoring(moves* move_list)
     }
 }
 
-//Geef elke zet een score kwa goed/slecht.
+//Geef elke zet een score kwa goed/slecht voor het evalueren zodat move ordering.
 static inline int score_move(int move)
 {
-//    int piece_score = material_score[get_move_piece(move)];
-
+    int piece_score = material_score[get_move_piece(move)];
 
     // als pv move scoring aan staat
     if (score_pv)
@@ -2862,7 +2306,7 @@ static inline int score_move(int move)
             return 8000;
         else
             //score history moves
-            return history_moves[get_move_piece(move)][get_move_target(move)];
+            return history_moves[get_move_piece(move)][get_move_target(move)] + piece_score;
     }
     return 0;
 }
@@ -2901,7 +2345,7 @@ static inline int sort_moves(moves* move_list)
             }
         }
     }
-
+    return 0;
 }
 
 //Print move scores.
@@ -2919,32 +2363,16 @@ void print_move_scores(moves* move_list)
         printf(" score: %d\n", score_move(move_list->moves[count]));
     }
 }
-
-//Repetition draw detection
-static inline int is_repetition()
-{
-    //Loop over repetition index bereik
-    for (int index = 0; index < repetition_index; index++)
-        //Als de hash key hetzelfde is als eerder dus repetitie
-        if (repetition_table[index] == hash_key)
-            //Repetitie dus true
-            return 1;
-
-    //Als geen repetition, dan 0
-    return 0;
-}
-
 // quiescence search
 static inline int quiescence(int alpha, int beta)
 {
-    if((nodes & 2047)== 0)
+    // elke 2047 nodes.
+    if ((nodes & 2047) == 0)
+        //krijg gui input
         communicate();
+
     // verhoog node count
     nodes++;
-
-    // zorgt ervoor dat engine niet crash (ofwel niet overflowt)
-    if (ply > MAX_PLY - 1)
-        return evaluate();
 
     // evaluatie functie
     int eval = evaluate();
@@ -2974,86 +2402,47 @@ static inline int quiescence(int alpha, int beta)
         //verhoog ply
         ply++;
 
-        //Verhoog index met 1 en sla de hash key op
-        repetition_index++;
-        repetition_table[repetition_index] = hash_key;
-
         //alleen legale moves
         if (make_move(move_list->moves[count], only_captures) == 0)
         {
             //Ply -1.
             ply--;
-
-            //Verlaag index met 1
-            repetition_index--;
-
             //Ga naar volgende zet.
             continue;
         }
         //score current move
         int score = -quiescence(-beta, -alpha);
-
         //verlaag ply
         ply--;
-
-        //Verlaag index met 1
-        repetition_index--;
-
         //take move back
         take_back();
 
         //return 0 als de tijd op is
         if (stopped == 1) return 0;
 
-
+        //fail hard beta cutoff
+        if (score >= beta)
+        {
+            //node (move) fails high
+            return beta;
+        }
 
         //found a better move
         if (score > alpha)
         {
             //PV node (move)
             alpha = score;
-
-             //fail hard beta cutoff
-        if (score >= beta)
-        {
-            //node (move) fails high
-            return beta;
-        }
         }
     }
     //node (move) fails low (of hetzelfde dan alpha of lager)
     return alpha;
 }
-const int full_depth_moves = 4;
-const int reduction_limit = 3;
-
 
 //Negamax alpha-beta search.
 static inline int negamax(int alpha, int beta, int depth)
 {
-    //Variabele to score current move (van de static evaluation)
-    int score;
-
-    //define hash flag
-    int hash_flag = hash_flag_alpha;
-
-    //Als repetitie
-    if (ply && is_repetition())
-        //Geef gelijkspel score
-        return 0;
-
-    //Hack om erachter te komen of de node pv is of niet
-    int pv_node = beta - alpha > 1;
-
-    //read hash entry als niet de pv
-    if (ply &&(score = read_hash_entry(alpha, beta, depth)) != no_hash_entry && pv_node == 0)
-    //als de move al eens is gezocht en dus al een waarde heeft
-        return score;
-
-       // elke 2047 nodes.
-    if ((nodes & 2047) == 0)
-        //krijg gui input
-        communicate();
+    // de find pv variabele definiëren
+    int found_pv = 0;
 
     // init pv length
     pv_length[ply] = ply;
@@ -3077,50 +2466,6 @@ static inline int negamax(int alpha, int beta, int depth)
     //Legal moves variabele.
     int legal_moves = 0;
 
-    //null move pruning
-    if (depth >= 3 && in_check == 0 && ply)
-    {
-        //preserve board state
-        copy_board();
-
-        //increment ply
-        ply++;
-
-        //Verhoog index met 1 en sla de hash key op
-        repetition_index++;
-        repetition_table[repetition_index] = hash_key;
-
-        //Update hash enpassant als mogelijk
-        if (enpassant != no_sq) hash_key ^= enpassant_keys[enpassant];
-
-        //reset enpassement capture square naar niks
-        enpassant = no_sq;
-
-        //switching side, so opponent has an extra move to make
-        side ^= 1;
-
-        //Hash de kant
-        hash_key ^= side_key;
-
-        if(enpassant != no_sq) hash_key ^= enpassant_keys[enpassant];
-
-        //search moves with reduced search depth to find beta cutoffs (R is dus een reduction limit)
-        score = -negamax(-beta, -beta + 1, depth - 1 - 2);
-
-         //decrement ply
-        ply--;
-
-        //Verlaag index met 1
-        repetition_index--;
-
-        //restore board state
-        take_back();
-
-
-        //fail hard beta cutoff
-        if (score >= beta)
-            return beta;
-    }
     //Creeër move list genaamd moves.
     moves move_list[1];
     //Genereer zetten.
@@ -3133,9 +2478,6 @@ static inline int negamax(int alpha, int beta, int depth)
 
     sort_moves(move_list);
 
-    //number of moves searched in a move list
-    int moves_searched = 0;
-
     //Loop over zetten in move_list.
     for (int count = 0; count < move_list->count; count++)
     {
@@ -3144,103 +2486,47 @@ static inline int negamax(int alpha, int beta, int depth)
         //Half move++
         ply++;
 
-        //Verhoog index met 1 en sla de hash key op
-        repetition_index++;
-        repetition_table[repetition_index] = hash_key;
-
         //Als zet niet legaal is, dan ply - 1.
         if (make_move(move_list->moves[count], all_moves) == 0)
         {
             //Ply -1 en ga verder.
             ply--;
-
-            //Verlaag index met 1
-            repetition_index--;
-
             continue;
         }
         //Legale zetten +1
         legal_moves++;
 
-        // Full depth searched
-        if (moves_searched == 0) // First move, use full-window search
-        //Geef de zet een score.
-            score = -negamax( -beta, -alpha, depth - 1);
+        //Variabele to score current move (van de static evaluation)
+        int score;
 
-        // LMR
-        else
+        // Wanneer move is gevonden met score tussen alpha en beta
+        if (found_pv)
         {
-            // condition to consider LMR
-            if (
-                moves_searched >= full_depth_moves &&
-                depth >= reduction_limit &&
-                in_check == 0 &&
-                get_move_capture(move_list->moves[count]) == 0 &&
-                get_move_promoted(move_list->moves[count]) == 0
-                )
-                // Search this move with reduced depth:
-                score = -negamax(-alpha - 1, -alpha, depth - 2);
-
-                // Hack to ensure that full-depth search is done.
-            else score = alpha + 1;
-
-            // PVS
-            if (score > alpha)
-            {
-                //Wanneer je een score hebt gevonden tussen alpha en beta, de rest van de moves wordt dan vanuit gegaan dat ze slecht zijn. Dit is sneller dan als gedacht wordt dat er wel nog een goede move is.
-                score = -negamax(-alpha - 1, -alpha, depth - 1);
-
-                // Als er toch een betere move is, dan moet op de normale alpha beta manier gezocht worden.
-                if ((score > alpha) && (score < beta))
-                    score = -negamax(-beta, -alpha, depth - 1);
-            }
+            // Er van uit gaan dat alle andere moves slecht zijn ipv dat er misschien één bijzit die wel goed is
+            score = -negamax(-alpha - 1, -alpha, depth - 1);
+            //Als het algoritme fout zit en de score toch tussen alpha en beta zit, dan  moet hij opnieuw zoeken (dus opnieuw alfa beta search). Dit is dus minder snel
+             //dan als hij meteen was gaan zoeken naar een move die wel goed is. Echter gebeurd dit niet vaak genoeg, dus is het het wel waard.
+            if ((score > alpha) && (score < beta))
+                // opnieuw zoeken naar de move die blijkt goed te zijn op de normale alfa beta manier
+                score = -negamax(-beta, -alpha, depth - 1);
         }
-
-
+        //voor andere typen moves
+        else
+            //Geef de zet een score.
+            score = -negamax(-beta, -alpha, depth - 1);
 
         //Ply -1.
         ply--;
-
-        //Verlaag index met 1
-        repetition_index--;
-
         //Zet terug nemen.
         take_back();
 
         //return 0 als de tijd op is
         if (stopped == 1) return 0;
 
-        //increment moves searched
-        moves_searched++;
 
-        //Als de score groter is dan alpha (betere zet).
-        if (score > alpha)
+        //Als de score groter of gelijk is aan beta. (Node fails high).
+        if (score >= beta)
         {
-            //switch hash flag from scoring score for alpha to PV
-            hash_flag = hash_flag_exact;
-            // voor quiet moves
-            if (get_move_capture(move_list->moves[count]) == 0)
-                //store history moves
-                history_moves[get_move_piece(move_list->moves[count])][get_move_target(move_list->moves[count])] += depth;
-
-            //Stel alpha gelijk aan score.
-            alpha = score;
-
-            // schrijf een pv move uit de tabel
-            pv_table[ply][ply] = move_list->moves[count];
-            // loop over de ply
-            for (int next_ply = ply + 1; next_ply < pv_length[ply + 1]; next_ply++)
-                // De volgende moves die nog moeten komen uit de tabel moeten in de lijn van deze ply worden gezet
-                pv_table[ply][next_ply] = pv_table[ply + 1][next_ply];
-
-            // verander pv length
-            pv_length[ply] = pv_length[ply + 1];
-            //Als de score groter of gelijk is aan beta. (Node fails high).
-
-          if (score >= beta)
-        {
-            // store hash entry with score equal to beta
-            write_hash_entry(beta, depth, hash_flag_beta);
             // voor quiet moves
             if (get_move_capture(move_list->moves[count]) == 0)
             {
@@ -3251,6 +2537,30 @@ static inline int negamax(int alpha, int beta, int depth)
             //Return beta.
             return beta;
         }
+
+        //Als de score groter is dan alpha (betere zet).
+        if (score > alpha)
+        {
+            // voor quiet moves
+            if (get_move_capture(move_list->moves[count]) == 0)
+                //store history moves
+                history_moves[get_move_piece(move_list->moves[count])][get_move_target(move_list->moves[count])] += depth;
+
+            //Stel alpha gelijk aan score.
+            alpha = score;
+
+            //enable found pv flag
+            found_pv = 1;
+
+            // schrijf een pv move uit de tabel
+            pv_table[ply][ply] = move_list->moves[count];
+            // loop over de ply
+            for (int next = ply + 1; next < pv_length[ply + 1]; next++)
+                // De volgende moves die nog moeten komen uit de tabel moeten in de lijn van deze ply worden gezet
+                pv_table[ply][next] = pv_table[ply + 1][next];
+
+            // verander pv length
+            pv_length[ply] = pv_length[ply + 1];
         }
     }
     //Als er geen legale zetten zijn.
@@ -3259,14 +2569,11 @@ static inline int negamax(int alpha, int beta, int depth)
         //En als de koning in check is.
         if (in_check)
             //Dan return mate. +ply want mate in 1 gaat voor mate in 10.
-            return -mate_value + ply;
+            return -49000 + ply;
         else
             //Anders stalemate.
             return 0;
     }
-    // store hash entry with score equal to beta
-    write_hash_entry(alpha, depth, hash_flag);
-
     //Return alpha. (Node fails low).
     return alpha;
 }
@@ -3274,9 +2581,9 @@ static inline int negamax(int alpha, int beta, int depth)
 //Search positie voor beste zet.
 void search_position(int depth)
 {
-    int score = 0;
     //reset nodes teller voor nieuwe evaluation
     nodes = 0;
+    int score = 0;
     //reset time is op flag
     stopped = 0;
     //reset pv flags
@@ -3288,12 +2595,6 @@ void search_position(int depth)
     memset(pv_table, 0, sizeof(pv_table));
     memset(pv_length, 0, sizeof(pv_length));
 
-
-
-    //Define alpha beta values
-    int alpha = -infinity;
-    int beta = infinity;
-
     // iterative deepening (evaluation maar dan per depth)
     for (int current = 1; current <= depth; current++)
     {
@@ -3301,32 +2602,13 @@ void search_position(int depth)
         if (stopped == 1)
             //stop calculating zetten en geef de beste zet
             break;
-
         // we volgen pv, dus we zetten pv aan
         follow_pv = 1;
         //Zoek de beste zet in de gegeven positie.
-        int score = negamax(alpha, beta, current);
+        int score = negamax(-50000, 50000, current);
 
-        if ((score <= alpha) || (score >= beta)) {
-            alpha = -infinity;    // We fell outside the window, so try again with a
-            beta = infinity;      //  full-width window (and the same depth).
-            continue;
-
-        }
-        // Set up the window for the next iteration.
-        alpha = score - 50;
-        beta = score + 50;
-
-        if (score > -mate_value && score < -mate_score)
-            printf("info score mate %d depth %d nodes %ld time %d pv ", -(score + mate_value) / 2 - 1, current, nodes, get_time_ms() - starttime);
-
-        else if (score > mate_score && score < mate_value)
-            printf("info score mate %d depth %d nodes %ld time %d pv ", (mate_value - score) / 2 + 1, current, nodes, get_time_ms() - starttime);
-
-        else
-            //Print belangrijke info.
-            printf("info score cp %d depth %d nodes %ld time %d pv ", score, current, nodes, get_time_ms() - starttime);
-
+        //Print belangrijke info.
+        printf("info score cp %d depth %d nodes %ld time %d pv ", score, current, nodes, get_time_ms() - starttime);
         for (int count = 0; count < pv_length[0]; count++)
         {
             print_move(pv_table[0][count]);
@@ -3348,7 +2630,7 @@ UCI
 ***************/
 //Geef de user/GUI move string input (bv e7e8q). (binnen de haakjes is anders in vid 44)
 int parse_move(char *move_string)
-    {
+{
     //Generate move list.
     moves move_list[1];
     //Generate moves.
@@ -3369,44 +2651,32 @@ int parse_move(char *move_string)
         {
             //Init promoted piece.
             int promoted_piece = get_move_promoted(move);
- // promoted piece is available
+
+            //Als promotie in
             if (promoted_piece)
             {
-                // promoted to queen
-                if ((promoted_piece == Q || promoted_piece == q) && move_string[4] == 'q')
-                    // return legal move
+                //Als 5e cijfer/letter een qrb of n, dan promotie.
+                if (move_string[4] == 'q' || move_string[4] == 'r' || move_string[4] == 'b' || move_string[4] == 'n')
+                    //Return legal move.
                     return move;
-                // promoted to rook
-                else if ((promoted_piece == R || promoted_piece == r) && move_string[4] == 'r')
-                    // return legal move
-                    return move;
-                // promoted to bishop
-                else if ((promoted_piece == B || promoted_piece == b) && move_string[4] == 'b')
-                    // return legal move
-                    return move;
-                // promoted to knight
-                else if ((promoted_piece == N || promoted_piece == n) && move_string[4] == 'n')
-                    // return legal move
-                    return move;
-                // continue the loop on possible wrong promotions (e.g. "e7e8f")
-                continue;
+                //Return illegal move.
+                return 0;
             }
-            // return legal move
+            //Return legal move. (in tutorial "return 1" vid 44)
             return move;
         }
     }
-    // return illegal move
+    //Return illegal move.
     return 0;
-
 }
 
 //Parce uci position commmand.
-void parse_position(char* command)
+void parse_position(const char* command)
 {
     //Ga 9 tekens verder in de command. (bv "postion startpos" leest die vanaf startpos want dat is belangrijk en daarvoor niet).
     command += 9;
     //Current_char = command.
-    char* current_char = command;
+    const char* current_char = command;
 
     //Als de letters na postition startpos zijn dus command "position startpos".
     if (strncmp(command, "startpos", 8) == 0)
@@ -3450,11 +2720,6 @@ void parse_position(char* command)
                 //Stop de loop.
                 break;
 
-            //Verhoog repetition index
-            repetition_index++;
-            //Schrijf hash key in repetition table
-            repetition_table[repetition_index] = hash_key;
-
             //Doe de zetten.
             make_move(move, all_moves);
             //Zolang er geen spatie is, naar volgende teken gaan.
@@ -3463,12 +2728,10 @@ void parse_position(char* command)
             current_char++;
         }
     }
-
-    print_board();
 }
 
 //UCI go command.
-void parse_go(char* command)
+void parse_go(const char* command)
 {
     // init parameters
     int depth = -1;
@@ -3551,142 +2814,181 @@ void parse_go(char* command)
     printf("time:%d start:%d stop:%d depth:%d timeset:%d\n",
     time, starttime, stoptime, depth, timeset);
 
-    //idk???
     search_position(depth);
 }
 
 //Belangrijkste UCI loop
+// main UCI loop
 void uci_loop()
 {
-    //Reset stdin en stdout buffers.
+    // reset STDIN & STDOUT buffers
     setbuf(stdin, NULL);
     setbuf(stdout, NULL);
 
-    //Groot nummer want moet altijd genoeg tekens zijn in de input, kan best veel zijn.
+    // define user / GUI input buffer
     char input[2000];
 
-    //Print engine info
-    printf("id name AlphaEngine\n");
-    printf("id author Mart:)\n");
+    // print engine info
+    printf("id name BBC\n");
+    printf("id name Code Monkey King\n");
     printf("uciok\n");
 
-    //Main loop (1 staat voor true)
+    // main loop
     while (1)
     {
-        //Reset user /gui input.
+        // reset user /GUI input
         memset(input, 0, sizeof(input));
-        //Zorgt ervoor dat de output bij de gui aankomt.
+
+        // make sure output reaches the GUI
         fflush(stdout);
 
-        //Get user / GUI input.
+        // get user / GUI input
         if (!fgets(input, 2000, stdin))
+            // continue the loop
             continue;
-        //Anders check dat het niet begint met een nieuwe regel.
+
+        // make sure input is available
         if (input[0] == '\n')
+            // continue the loop
             continue;
-        //Anders als isready, dan print readyok.
+
+        // parse UCI "isready" command
         if (strncmp(input, "isready", 7) == 0)
         {
-            //Print ready ok met een nieuwe regel.
             printf("readyok\n");
             continue;
         }
-        //Anders als position, dan parse position.
-        else if (strncmp(input, "position", 8) == 0)
-        {
 
+        // parse UCI "position" command
+        else if (strncmp(input, "position", 8) == 0)
+            // call parse position function
             parse_position(input);
-            //Clear hash table
-            clear_hash_table();}
-        //Anders als ucinewgame, dan parse start_position.
+
+        // parse UCI "ucinewgame" command
         else if (strncmp(input, "ucinewgame", 10) == 0)
-            {parse_position("position startpos");
-            //Clear hash table
-            clear_hash_table();}
-        //Anders als go, dan parse go.
+            // call parse position function
+            parse_position("position startpos");
+
+        // parse UCI "go" command
         else if (strncmp(input, "go", 2) == 0)
+            // call parse go function
             parse_go(input);
-        //Anders als quit, dan break (stop).
+
+        // parse UCI "quit" command
         else if (strncmp(input, "quit", 4) == 0)
+            // quit from the chess engine program execution
             break;
-        //Anders als uci, dan info printen.
+
+        // parse UCI "uci" command
         else if (strncmp(input, "uci", 3) == 0)
         {
-            printf("id name AlphaEngine\n");
-            printf("id author Mart\n");
+            // print engine info
+            printf("id name BBC\n");
+            printf("id name Code Monkey King\n");
             printf("uciok\n");
         }
     }
 }
 
+/**************
 
+MAIN DRIVER
 
-/**********************************\
- ==================================
-
-              Init all
-
- ==================================
-\**********************************/
-
-// init all variables soort van opvragen zodat de computer ze herinnert
+***************/
+//Initiate alle rook en bishop attacks.
 void init_all()
 {
-    // init leaper pieces attacks
+    //Initiate de verschillende aanvallen
     init_leapers_attacks();
-
-    // init slider pieces attacks
     init_sliders_attacks(bishop);
     init_sliders_attacks(rook);
-
-    // init magic numbers
-    //init_magic_numbers();
-
-    // init random keys for hashing purposes
-    init_random_keys();
-
-    // clear hash table
-    clear_hash_table();
 }
 
-
-/**********************************\
- ==================================
-
-             Main driver
-
- ==================================
-\**********************************/
-//Main loop
-int main()
+//Perft driver.
+static inline void perft_driver(int depth)
 {
-    //Init all
-    init_all();
-
-    //Debug mode variable, 0 is uit en 1 is aan
-    int debug = 1;
-
-    //Als debuggen aan staat, dan...
-    if (debug)
+    //Als de depth 0 is.
+    if (depth == 0)
     {
-        //Parse start pos
-        parse_fen(start_position);
-        //Print het spelbord
-        print_board();
-        //Zoek de positie 10 zetten diep
-        search_position(10);
-
-        //Maak de beste zet
-        make_move(pv_table[0][0], all_moves);
-
-        //Zoek opnieuw
-        search_position(10);
+        //Tel 1 bij nodes op.
+        nodes++;
+        return;
     }
 
-    //Als debug uit staat, dan..
-    else
-        //UCI loop voor het echte spelen
-        uci_loop();
+    //Generate move list
+    moves move_list[1];
+    //Generate zetten in de move list.
+    generate_moves(move_list);
+
+    //Loop over alle gegenereerde zetten in move_list.
+    for (int move_count = 0; move_count < move_list->count; move_count++)
+    {
+        //Onthoud eerdere bordstatus.
+        copy_board();
+
+        //Maak zet???
+        if (!make_move(move_list->moves[move_count], all_moves)) continue;
+        //Depth 1 naar beneden want net zet gedaan en zometeen zet terug dus depth blijft hetzelfde.
+        perft_driver(depth - 1);
+
+        //Take back.
+        take_back();
+    }
+}
+//Perft test (performance test zoals aantal nodes per depth).
+void perft(int depth)
+{
+    //Print "performance test".
+    printf("\n     Performance test\n\n");
+    //Generate move list.
+    moves move_list[1];
+    //Generate zetten in de move list.
+    generate_moves(move_list);
+    //Start tracking tijd.
+    auto start_time = get_time_ms();
+    //Loop over alle gegenereerde zetten in  move_list.
+    for (int move_count = 0; move_count < move_list->count; move_count++)
+    {
+        //Onthoud eerdere bordstatus.
+        copy_board();
+        //Maak zet???
+        if (!make_move(move_list->moves[move_count], all_moves)) continue;
+        //Alle nodes samen.
+        long all_nodes = nodes;
+        perft_driver(depth - 1);
+        //Old nodes, de nodes per zet in depth 1.
+        long old_nodes = nodes - all_nodes;
+        //Take back.
+        take_back();
+        //Print zet met aantal nodes erachter.
+        printf("     move: %s%s%c  nodes: %ld\n", square_to_coordinates[get_move_source(move_list->moves[move_count])],
+            square_to_coordinates[get_move_target(move_list->moves[move_count])],
+            get_move_promoted(move_list->moves[move_count]) ? promoted_pieces[get_move_promoted(move_list->moves[move_count])] : ' ',
+            old_nodes);
+    }
+    //Print depth.
+    printf("\n\n    Depth:   %d\n", depth);
+    //Print aantal nodes.
+    printf("    Nodes:   %ld\n", nodes);
+    //Print tijd sinds laatste zet in ms.
+    printf("    Time:    %ld\n", get_time_ms() - start_time);
+}
+
+int main()
+{
+    init_all();
+
+    int debug = 0;
+
+    if (debug)
+    {
+        parse_fen(tricky_position);
+        print_board();
+        search_position(7);
+
+
+    }
+    else uci_loop();
 
     return 0;
 }
