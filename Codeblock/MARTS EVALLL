@@ -2386,18 +2386,110 @@ int eg_king_table[64] = {
     -27, -11,   4,  13,  14,   4,  -5, -17,
     -53, -34, -21, -11, -28, -14, -24, -43
 };
-//static evaluation score
-int score = 0;
-//current pieces bitboard copy
-U64 bitboard;
-// init piece & square
-int piece, square;
-//Define opening score en endgame score
-int opening_score = 0;
-int endgame_score = 0;
+
 
 static inline int evaluate()
 {
+    //static evaluation score
+    int score = 0;
+    //current pieces bitboard copy
+    U64 bitboard;
+    // init piece & square
+    int piece, square;
+    //Define tellen stukken
+    int Pcount = 0;
+    for (int bb_piece = P; bb_piece <= k; bb_piece++)
+    {
+        // init bitboard piece copy
+        bitboard = bitboards[bb_piece];
+        //loop over pieces within a bitboard
+        while (bitboard)
+        {
+            //init piece
+            piece = bb_piece;
+            //Kies stuk.
+            switch (piece)
+            {
+                //Tel het aantal witte stukken per stuk.
+                case P:
+                    Pcount++;
+                    break;
+                case N:
+                    Ncount++;
+                    break;
+                case B:
+                    Bcount++;
+                    break;
+                case R:
+                    Rcount++;
+                    break;
+                case Q:
+                    Qcount++;
+                    break;
+                case K:
+                    Kcount++;
+                    break;
+
+                //Tel het aantal zwarte stukken per stuk
+                case p:
+                    pcount++;
+                    break;
+                case n:
+                    ncount++;
+                    break;
+                case b:
+                    bcount++;
+                    break;
+                case r:
+                    rcount++;
+                    break;
+                case q:
+                    qcount++;
+                    break;
+                case k:
+                    kcount++;
+                    break;
+            }
+
+            //Pop ls1b van kopie.
+            pop_bit(bitboard, square);
+        }
+    }
+    //Telt het aantal bits op het bitboard dat aan(1) staat.
+    int Pcount = 0;
+    while (bitboards[piece])
+    {
+        Pcount++;
+        bitboards[piece] &= bitboards[piece] - 1;
+    }
+    return Pcount;
+
+    //Define opening score en endgame score
+    int opening_score = 0;
+    int endgame_score = 0;
+    //Define phase dingen
+    int PawnPhase = 0;
+    int KnightPhase = 1;
+    int BishopPhase = 1;
+    int RookPhase = 2;
+    int QueenPhase = 4;
+    int TotalPhase = PawnPhase*16 + KnightPhase*4 + BishopPhase*4 + RookPhase*4 + QueenPhase*2;
+
+    int phase = TotalPhase;
+
+    phase -= Pcount * PawnPhase; // Where p is the number of white pawns currently on the board
+    phase -= N * KnightPhase;
+    phase -= B * BishopPhase;
+    phase -= R * RookPhase;
+    phase -= Q * QueenPhase;
+    phase -= p * PawnPhase;
+    phase -= n * KnightPhase;
+    phase -= b * BishopPhase;
+    phase -= r * RookPhase;
+    phase -= q * QueenPhase;
+
+    phase = (phase * 256 + (TotalPhase / 2)) / TotalPhase;
+
     // loop over piece bitboards
     for (int bb_piece = P; bb_piece <= k; bb_piece++)
     {
@@ -2417,49 +2509,67 @@ static inline int evaluate()
             switch (piece)
             {
                 //Tel de positional score van wit per stuk erbij op.
-                case P: opening_score += mg_pawn_table[square] && endgame_score += eg_pawn_table[square]; break;
-                case N: opening_score += mg_knight_table[square] && endgame_score += eg_knight_table[square]; break;
-                case B: opening_score += mg_bishop_table[square] && endgame_score += eg_bishop_table[square]; break;
-                case R: opening_score += mg_rook_table[square] && endgame_score += eg_rook_table[square]; break;
-                case Q: opening_score += mg_queen_table[square] && endgame_score += eg_queen_table[square]; break;
-                case K: opening_score += mg_king_table[square] && endgame_score += eg_king_table[square]; break;
+                case P:
+                    opening_score += mg_pawn_table[square];
+                    endgame_score += eg_pawn_table[square];
+                    break;
+                case N:
+                    opening_score += mg_knight_table[square];
+                    endgame_score += eg_knight_table[square];
+                    break;
+                case B:
+                    opening_score += mg_bishop_table[square];
+                    endgame_score += eg_bishop_table[square];
+                    break;
+                case R:
+                    opening_score += mg_rook_table[square];
+                    endgame_score += eg_rook_table[square];
+                    break;
+                case Q:
+                    opening_score += mg_queen_table[square];
+                    endgame_score += eg_queen_table[square];
+                    break;
+                case K:
+                    opening_score += mg_king_table[square];
+                    endgame_score += eg_king_table[square];
+                    break;
 
                 //Trek de positional score van wit per stuk ervanaf.
-                case p: opening_score -= mg_pawn_table[mirror_score[square]] && endgame_score -= eg_pawn_table[mirror_score[square]]; break;
-                case n: opening_score -= mg_knight_table[mirror_score[square]] && endgame_score -= eg_knight_table[mirror_score[square]]; break;
-                case b: opening_score -= mg_bishop_table[mirror_score[square]] && endgame_score -= eg_bishop_table[mirror_score[square]]; break;
-                case r: opening_score -= mg_rook_table[mirror_score[square]] && endgame_score -= eg_rook_table[mirror_score[square]]; break;
-                case q: opening_score -= mg_queen_table[mirror_score[square]] && endgame_score -= eg_queen_table[mirror_score[square]]; break;
-                case k: opening_score -= mg_king_table[mirror_score[square]] && endgame_score -= eg_king_table[mirror_score[square]]; break;
+                case p:
+                    opening_score -= mg_pawn_table[mirror_score[square]];
+                    endgame_score -= eg_pawn_table[mirror_score[square]];
+                    break;
+                case n:
+                    opening_score -= mg_knight_table[mirror_score[square]];
+                    endgame_score -= eg_knight_table[mirror_score[square]];
+                    break;
+                case b:
+                    opening_score -= mg_bishop_table[mirror_score[square]];
+                    endgame_score -= eg_bishop_table[mirror_score[square]];
+                    break;
+                case r:
+                    opening_score -= mg_rook_table[mirror_score[square]];
+                    endgame_score -= eg_rook_table[mirror_score[square]];
+                    break;
+                case q:
+                    opening_score -= mg_queen_table[mirror_score[square]];
+                    endgame_score -= eg_queen_table[mirror_score[square]];
+                    break;
+                case k:
+                    opening_score -= mg_king_table[mirror_score[square]];
+                    endgame_score -= eg_king_table[mirror_score[square]];
+                    break;
             }
+
             //Pop ls1b van kopie.
             pop_bit(bitboard, square);
         }
     }
 
-    int PawnPhase = 0;
-    int KnightPhase = 1;
-    int BishopPhase = 1;
-    int RookPhase = 2;
-    int QueenPhase = 4;
-    int TotalPhase = PawnPhase*16 + KnightPhase*4 + BishopPhase*4 + RookPhase*4 + QueenPhase*2;
+    score = ((opening_score * (256 - phase)) + (endgame_score * phase)) / 256;
+    printf ("%d", Pcount);
 
-    int phase = TotalPhase;
 
-    phase -= P * PawnPhase; // Where p is the number of white pawns currently on the board
-    phase -= N * KnightPhase;
-    phase -= B * BishopPhase;
-    phase -= R * RookPhase;
-    phase -= Q * QueenPhase;
-    phase -= p * PawnPhase;
-    phase -= n * KnightPhase;
-    phase -= b * BishopPhase;
-    phase -= r * RookPhase;
-    phase -= q * QueenPhase;
-
-    phase = (phase * 256 + (TotalPhase / 2)) / TotalPhase;
-    score = ((opening_score * (256 - phase)) + (endgame_score * phase)) / 256
-    printf ("%d", score);
 }
 
 
