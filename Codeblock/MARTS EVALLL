@@ -2398,6 +2398,19 @@ static inline int evaluate()
     int piece, square;
     //Define tellen stukken
     int Pcount = 0;
+    int Ncount = 0;
+    int Bcount = 0;
+    int Rcount = 0;
+    int Qcount = 0;
+    int Kcount = 0;
+
+    int pcount = 0;
+    int ncount = 0;
+    int bcount = 0;
+    int rcount = 0;
+    int qcount = 0;
+    int kcount = 0;
+
     for (int bb_piece = P; bb_piece <= k; bb_piece++)
     {
         // init bitboard piece copy
@@ -2456,13 +2469,13 @@ static inline int evaluate()
         }
     }
     //Telt het aantal bits op het bitboard dat aan(1) staat.
-    int Pcount = 0;
-    while (bitboards[piece])
-    {
-        Pcount++;
-        bitboards[piece] &= bitboards[piece] - 1;
-    }
-    return Pcount;
+    //int Pcount = 0;
+    //while (bitboards[piece])
+    //{
+    //    Pcount++;
+    //    bitboards[piece] &= bitboards[piece] - 1;
+    //}
+    //return Pcount;
 
     //Define opening score en endgame score
     int opening_score = 0;
