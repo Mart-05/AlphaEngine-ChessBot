@@ -2238,7 +2238,7 @@ void perft_test(int depth)
 EVALUATION
 
 ***************/
-/*int   [12] = {
+int material_score[12] = {
     100,      // white pawn score
     300,      // white knight scrore
     350,      // white bishop score
@@ -2251,7 +2251,7 @@ EVALUATION
    -500,      // black rook score
   -1000,      // black queen score
  -10000,      // black king score
-};*/
+};
 int mg_value[12] = { 82, 337, 365, 477, 1025,  0, -82,-337,-365,-477,-1025,0};
 int eg_value[12] = { 94, 281, 297, 512,  936,  0,-94,-281,-297,-512,-936,0};
 
@@ -2706,7 +2706,7 @@ static inline void enable_pv_scoring(moves* move_list)
 //Geef elke zet een score kwa goed/slecht.
 static inline int score_move(int move)
 {
-    int piece_score = eg_value[get_move_piece(move)];
+    int piece_score = material_score[get_move_piece(move)];
 
 
     // als pv move scoring aan staat
