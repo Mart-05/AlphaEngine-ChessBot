@@ -2252,8 +2252,8 @@ int material_score[12] = {
   -1000,      // black queen score
  -10000,      // black king score
 };
-int mg_value[12] = { 82, 337, 365, 477, 1025,  12000, -82,-337,-365,-477,-1025,-12000};
-int eg_value[12] = { 94, 281, 297, 512,  936,  12000,-94,-281,-297,-512,-936,-12000};
+int mg_value[12] = { 82, 337, 365, 477, 1025,  10000, -82,-337,-365,-477,-1025,-10000};
+int eg_value[12] = { 94, 281, 297, 512,  936,  10000,-94,-281,-297,-512,-936,-10000};
 
 //Vakje van engines kant naar tegenstanders kant en andersom.
 const int mirror_score[128] =
@@ -2706,7 +2706,7 @@ static inline void enable_pv_scoring(moves* move_list)
 //Geef elke zet een score kwa goed/slecht.
 static inline int score_move(int move)
 {
-    
+    int piece_score = material_score[get_move_piece(move)];
 
 
     // als pv move scoring aan staat
