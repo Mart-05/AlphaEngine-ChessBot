@@ -2252,8 +2252,8 @@ int material_score[12] = {
   -1000,      // black queen score
  -10000,      // black king score
 };
-int mg_value[12] = { 82, 337, 365, 477, 1025,  0, -82,-337,-365,-477,-1025,0};
-int eg_value[12] = { 94, 281, 297, 512,  936,  0,-94,-281,-297,-512,-936,0};
+int mg_value[12] = { 82, 337, 365, 477, 1025,  10000, -82,-337,-365,-477,-1025,-10000};
+int eg_value[12] = { 94, 281, 297, 512,  936,  10000,-94,-281,-297,-512,-936,-10000};
 
 //Vakje van engines kant naar tegenstanders kant en andersom.
 const int mirror_score[128] =
