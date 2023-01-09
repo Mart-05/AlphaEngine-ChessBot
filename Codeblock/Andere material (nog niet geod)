@@ -2477,8 +2477,8 @@ static inline int evaluate()
                     Qcount++;
                     break;
                 case K:
-                    opening_score += mg_value[square]+ mg_king_table[square];
-                    endgame_score += eg_value[square]+ eg_king_table[square];
+                    opening_score += mg_king_table[square];
+                    endgame_score += eg_king_table[square];
                     Kcount++;
                     break;
 
