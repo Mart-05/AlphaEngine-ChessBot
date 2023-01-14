@@ -1,5 +1,4 @@
-
-    #include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -2548,13 +2547,8 @@ static inline int evaluate()
     moves move_list[1];
     // generate moves
     generate_moves(move_list);
-        // loop over generated moves
-    for (int move_count = 0; move_count < move_list->count; move_count++)
-    {
-        mobility += 1;
-    }
 
-    score += mobility;
+    score += move_list->count;
 
     //printf ("%d", score);
     return (side == white) ? score : -score;
