@@ -1,4 +1,5 @@
-#include <stdio.h>
+
+    #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -2428,6 +2429,8 @@ static inline int evaluate()
     int opening_score = 0;
     int endgame_score = 0;
 
+    int mobility = 0;
+
     // loop over piece bitboards
     for (int bb_piece = P; bb_piece <= k; bb_piece++)
     {
@@ -2461,16 +2464,19 @@ static inline int evaluate()
                     opening_score += mg_bishop_table[square];
                     endgame_score += eg_bishop_table[square];
                     Bcount++;
+                    mobility += 1 * count_bits(get_bishop_attacks(square, occupancies[both]));
                     break;
                 case R:
                     opening_score += mg_rook_table[square];
                     endgame_score += eg_rook_table[square];
                     Rcount++;
+                    mobility += 2 * count_bits(get_rook_attacks(square, occupancies[both]));
                     break;
                 case Q:
                     opening_score += mg_queen_table[square];
                     endgame_score += eg_queen_table[square];
                     Qcount++;
+                    mobility += 3 * count_bits(get_queen_attacks(square, occupancies[both]));
                     break;
                 case K:
                     opening_score += mg_king_table[square];
@@ -2493,16 +2499,19 @@ static inline int evaluate()
                     opening_score -= mg_bishop_table[mirror_score[square]];
                     endgame_score -= eg_bishop_table[mirror_score[square]];
                     bcount++;
+                    mobility -= 1 * count_bits(get_bishop_attacks(square, occupancies[both]));
                     break;
                 case r:
                     opening_score -= mg_rook_table[mirror_score[square]];
                     endgame_score -= eg_rook_table[mirror_score[square]];
                     rcount++;
+                    mobility -= 2 * count_bits(get_rook_attacks(square, occupancies[both]));
                     break;
                 case q:
                     opening_score -= mg_queen_table[mirror_score[square]];
                     endgame_score -= eg_queen_table[mirror_score[square]];
                     qcount++;
+                    mobility -= 3 * count_bits(get_queen_attacks(square, occupancies[both]));
                     break;
                 case k:
                     opening_score -= mg_king_table[mirror_score[square]];
@@ -2541,16 +2550,7 @@ static inline int evaluate()
     phase = (phase * 256 + (TotalPhase / 2)) / TotalPhase;
 
     score += ((opening_score * (256 - phase)) + (endgame_score * phase)) / 256;
-
-    int mobility = 0;
-    // create move list instance
-    moves move_list[1];
-    // generate moves
-    generate_moves(move_list);
-
-    score += move_list->count;
-
-    //printf ("%d", score);
+    score += mobility;
     return (side == white) ? score : -score;
 
 
