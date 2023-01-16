@@ -2153,7 +2153,7 @@ static inline void generate_moves(moves* move_list)
  ==================================
 \**********************************/
 // leaf nodes (number of positions reached during the test of the move generator at a given depth)
-long nodes;
+U64 nodes;
 // perft driver
 static inline void perft_driver(int depth)
 {
@@ -2447,7 +2447,7 @@ U64 set_file_rank_mask(int file_number, int rank_number)
 {
     U64 mask = 0ULL;
 
-    for (int rank = 0; rank < 8; rank ++)
+    for (int rank = 0; rank < 8; rank++)
     {
         for (int file = 0; file < 8; file++)
         {
@@ -2469,7 +2469,7 @@ U64 set_file_rank_mask(int file_number, int rank_number)
 }
 void init_evaluation_masks()
 {
-    for (int rank = 0; rank < 8; rank ++)
+    for (int rank = 0; rank < 8; rank++)
     {
         for (int file = 0; file < 8; file++)
         {
@@ -2478,7 +2478,7 @@ void init_evaluation_masks()
            //  print_bitboard(file_masks[square]);
         }
     }
-    for (int rank = 0; rank < 8; rank ++)
+    for (int rank = 0; rank < 8; rank++)
     {
         for (int file = 0; file < 8; file++)
         {
@@ -2488,7 +2488,7 @@ void init_evaluation_masks()
         }
     }
 
-    for (int rank = 0; rank < 8; rank ++)
+    for (int rank = 0; rank < 8; rank++)
     {
         for (int file = 0; file < 8; file++)
         {
@@ -2498,7 +2498,7 @@ void init_evaluation_masks()
            //print_bitboard(file_masks[square]);
         }
     }
-    for (int rank = 0; rank < 8; rank ++)
+    for (int rank = 0; rank < 8; rank++)
     {
         for (int file = 0; file < 8; file++)
         {
@@ -2512,7 +2512,7 @@ void init_evaluation_masks()
             white_passed_masks[square] &= ~rank_masks[(7-i) * 8 + file];
         }
     }
-      for (int rank = 0; rank < 8; rank ++)
+      for (int rank = 0; rank < 8; rank++)
     {
         for (int file = 0; file < 8; file++)
         {
@@ -3797,3 +3797,4 @@ int main()
 
     return 0;
 }
+
