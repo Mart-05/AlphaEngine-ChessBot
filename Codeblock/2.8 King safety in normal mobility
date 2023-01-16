@@ -2707,8 +2707,7 @@ static inline int evaluate()
                 case k:
                     opening_score -= mg_king_table[mirror_score[square]];
                     endgame_score -= eg_king_table[mirror_score[square]];
-                    // positional score
-                    score -= king_score[mirror_score[square]];
+
 
                     // semi open file
                     if ((bitboards[p] & file_masks[square]) == 0)
