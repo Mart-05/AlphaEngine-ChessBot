@@ -2909,15 +2909,15 @@ static inline int evaluate()
     }
     //printf("ADJope: %d \n ADJend: %d \n", opening_score, endgame_score);
 
-    opening_score -= rook_adj[pcount];
-    endgame_score -= rook_adj[pcount];
-    opening_score += rook_adj[Pcount];
-    endgame_score += rook_adj[Pcount];
+    opening_score -= rook_adj[pcount] * rcount;
+    endgame_score -= rook_adj[pcount] * rcount;
+    opening_score += rook_adj[Pcount] * Rcount;
+    endgame_score += rook_adj[Pcount] * Rcount;
 
-    opening_score -= knight_adj[pcount];
-    endgame_score -= knight_adj[pcount];
-    opening_score += knight_adj[Pcount];
-    endgame_score += knight_adj[Pcount];
+    opening_score -= knight_adj[pcount] * ncount;
+    endgame_score -= knight_adj[pcount] * ncount;
+    opening_score += knight_adj[Pcount] * Ncount;
+    endgame_score += knight_adj[Pcount] * Ncount;
 
     //printf("ADJope: %d \n ADJend: %d \n", opening_score, endgame_score);
 
@@ -2969,7 +2969,7 @@ static inline int evaluate()
     white_total_count = Pcount + Ncount + Bcount + Rcount + Qcount;
     black_total_count = bcount + ncount + bcount + rcount + qcount;
 
-    //Voor wit
+    //Voor wit gelijkspel evaluatie
     //Een loper kan zelf geen schaakmat zetten
     if (white_total_count == 1 && Bcount == 1 && black_total_count == 0)
         return 0;
@@ -2998,7 +2998,7 @@ static inline int evaluate()
     if (white_total_count == 2 && Rcount == 1 && Ncount == 1 && black_total_count == 1 && rcount == 1)
         score /= 2;
 
-    //Voor zwart
+    //Voor zwart gelijkspel evaluatie
     //Een loper kan zelf geen schaakmat zetten
     if (black_total_count == 1 && bcount == 1 && white_total_count == 0)
         return 0;
@@ -4128,7 +4128,7 @@ void uci_loop()
 
     //Print engine info
     printf("id name AlphaEngine\n");
-    printf("id author Mart:)\n");
+    printf("id author Mart en Krijn:)\n");
     printf("uciok\n");
 
     //Main loop (1 staat voor true)
