@@ -2485,7 +2485,7 @@ const int knight_pair = 8;
 const int rook_pair = 16;
 
 // cohesion score
-const int pawn_cohesion = 1;
+const int pawn_cohesion = 2;
 const int knight_cohesion = 5;
 const int bishop_cohesion = 5;
 const int rook_cohesion = 3;
