@@ -2481,8 +2481,6 @@ const int open_file_score = 20;
 
 // pair bonus
 const int bishop_pair = 30;
-const int knight_pair = 8;
-const int rook_pair = 16;
 
 // cohesion score
 const int pawn_cohesion = 2;
@@ -2979,20 +2977,11 @@ static inline int evaluate()
     positional_score += knight_adj[Pcount] * Ncount;
 
     //printf("ADJope: %d \n ADJend: %d \n", opening_score, endgame_score);
-
-    if (ncount == 2)
-        positional_score -= knight_pair;
-    if (Ncount == 2)
-        positional_score += knight_pair;
+    
     if (bcount == 2)
         positional_score -= bishop_pair;
     if (Bcount == 2)
         positional_score += bishop_pair;
-    if (rcount == 2)
-        positional_score -= rook_pair;
-    if (Rcount == 2)
-        positional_score += rook_pair;
-
 
     //Define phase dingen
     int pawn_phase = 0;
