@@ -13,6 +13,32 @@ Stokfish      - Various Authors
 
 ## What to expect:
 The latest version includes:
-* A lot
-* ...
-* ...
+* Bitboard board representation.
+* Evaluation function including:
+  * Material scores.
+  * Positional scores by piece-square tables.
+  * Open file recognition.
+  * Bishop/rook/knight pair recognition.
+  * Piece score based on amount of pawns on the board.
+  * Tapered evaluation.
+  * Basic pawn evaluation.
+  * Basic mobility.
+  * Basic king safety.
+  * Basic cohesion.
+  * Basic endgame draw evaluation.
+* Move ordering by:
+  * Pv-move.
+  * Captures by MVV-LVA.
+  * Killer moves.
+  * History moves.
+* Transposition table.
+* Draw recognition by threefold repetition and 50-move rule. 
+* Negamax search using:
+  * Queiscence search.
+  * Null move pruning.
+  * Razoring.
+  * Aspiration window.
+  * Mis wrs nog wat hier......
+* Iterative search.
+* UCI commands including time settings.
+* Global hash table.
