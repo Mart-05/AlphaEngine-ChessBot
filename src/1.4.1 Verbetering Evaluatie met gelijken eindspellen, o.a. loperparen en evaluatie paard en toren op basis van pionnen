@@ -2482,8 +2482,6 @@ const int open_file_score = 20;
 
 // pair bonus
 const int bishop_pair = 30;
-const int knight_pair = 8;
-const int rook_pair = 16;
 
 //Adjustments voor waarden toren en paard naar aantal pionnen op het spel
 int knight_adj[9] = { -20, -16, -12, -8, -4,  0,  4,  8, 12 };
@@ -2921,18 +2919,10 @@ static inline int evaluate()
 
     //printf("ADJope: %d \n ADJend: %d \n", opening_score, endgame_score);
 
-    if (ncount == 2)
-        positional_score -= knight_pair;
-    if (Ncount == 2)
-        positional_score += knight_pair;
     if (bcount == 2)
         positional_score -= bishop_pair;
     if (Bcount == 2)
         positional_score += bishop_pair;
-    if (rcount == 2)
-        positional_score -= rook_pair;
-    if (Rcount == 2)
-        positional_score += rook_pair;
 
 
     //Define phase dingen
