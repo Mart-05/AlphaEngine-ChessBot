@@ -42,3 +42,9 @@ The latest version includes:
 * Iterative search.
 * UCI commands including time settings.
 * Global hash table.
+
+## Possible upgrades:
+* Make the code readable by everyone by updating comments.
+* Parallel search (probably lazy smp).
+* Update evaluation function by NNUE or automated tuning (like "Texel's Tuning Method").
+* Add an opening book.
