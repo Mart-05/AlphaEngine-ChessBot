@@ -45,6 +45,8 @@ The latest version includes:
 
 ## Possible upgrades:
 * Make the code readable by everyone by updating comments.
-* Parallel search (probably lazy smp).
+* Increase speed:
+  * Faster move generation
+  * Parallel search (probably lazy smp).
 * Update evaluation function by NNUE or automated tuning (like "Texel's Tuning Method").
 * Add an opening book.
