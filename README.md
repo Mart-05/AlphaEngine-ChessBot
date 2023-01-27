@@ -50,3 +50,4 @@ The latest version includes:
   * Parallel search (probably lazy smp).
 * Update evaluation function by NNUE or automated tuning (like "Texel's Tuning Method").
 * Add an opening book.
+* Add the possibility for pondering.
