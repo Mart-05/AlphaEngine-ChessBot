@@ -43,10 +43,10 @@ The latest version includes:
 * UCI commands including time settings.
 * Global hash table.
 
-## Possible upgrades:
-* Make the code readable by everyone by updating comments.
+## To do:
+* Make the code more readable by updating the comments (to english).
 * Increase speed:
-  * Faster move generation
+  * Faster move generation.
   * Parallel search (probably lazy smp).
 * Update evaluation function by NNUE or automated tuning (like "Texel's Tuning Method").
 * Add an opening book.
