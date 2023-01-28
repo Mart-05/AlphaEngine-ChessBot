@@ -3396,7 +3396,7 @@ int main()
     init_all();
 
     //Debug mode variable, 0 is uit en 1 is aan
-    int debug = 1;
+    int debug = 0;
 
     //Als debuggen aan staat, dan...
     if (debug)
